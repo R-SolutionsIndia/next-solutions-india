@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solutions India | Cinematic Setup</title>
+    
+    <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+
+    <div id="loader">INITIALIZING_ENVIRONMENT...</div>
+
+    <div id="canvas-container"></div>
+
+    <div id="hero-wrapper">
+        <div id="ui-layer">
+            <header>
+                <div class="brand">Solutions<span>_</span>India</div>
+                <nav>
+                    <a href="index.html">Home</a>
+                    <a href="about.html">About</a>
+                    <a href="products.html">Products</a>
+                    <a href="branches.html">Branches</a>
+                    <a href="contact.html">Contact</a>
+                </nav>
+            </header>
+            
+            <div>
+                <!-- Hint removed -->
+            </div>
+
+            <div id="detail-card">
+                <div class="card-label" id="c-label">SYS_ID</div>
+                <h2 class="card-title" id="c-title">Component Name</h2>
+                <p class="card-desc" id="c-desc">Detailed physical and logical description of the hardware component.</p>
+                
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="val" id="c-m1-val">---</div>
+                        <div class="lbl" id="c-m1-lbl">Metric 1</div>
+                    </div>
+                    <div class="metric">
+                        <div class="val" id="c-m2-val">---</div>
+                        <div class="lbl" id="c-m2-lbl">Metric 2</div>
+                    </div>
+                </div>
+
+                <button class="btn-back" id="btn-back">← RETURN TO DESK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- The 120vh scroll buffer allows 3D morphing before content arrives -->
+    <div class="scroll-buffer"></div>
+
+    <section id="about" class="content-section">
+        <h2 class="section-header">
+            <span class="verb">Architecture is the</span><br>
+            <span class="noun">Foundation.</span>
+        </h2>
+        <p class="section-content">We curate resilient IT environments tailored for enterprise scale. From Edge computing to centralized data architecture, our solutions blend computational power with elegant structural design.</p>
+    </section>
+
+    <section id="products" class="content-section alt">
+        <h2 class="section-header">
+            <span class="verb">Integration is the</span><br>
+            <span class="noun">Catalyst.</span>
+        </h2>
+        <div class="grid-3">
+            <div class="card">
+                <h3>Neural Compute Rigs</h3>
+                <p>High-density GPU arrays designed for elegant AI modeling and predictive workflows.</p>
+            </div>
+            <div class="card">
+                <h3>Optical Routing</h3>
+                <p>Seamless optical switches ensuring frictionless data flow across physical domains.</p>
+            </div>
+            <div class="card">
+                <h3>NVMe Fabric Storage</h3>
+                <p>Redundant arrays engineered for mission-critical data integrity and rapid access.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="branches" class="content-section">
+        <h2 class="section-header">
+            <span class="verb">Presence is the</span><br>
+            <span class="noun">Network.</span>
+        </h2>
+        <div class="grid-3">
+            <div class="card">
+                <h3>Mumbai Node</h3>
+                <p>Primary HQ and Tier-1 Data Center Catalyst.</p>
+            </div>
+            <div class="card">
+                <h3>Bengaluru Node</h3>
+                <p>R&D and Neural Architecture Lab.</p>
+            </div>
+            <div class="card">
+                <h3>Delhi Node</h3>
+                <p>Federal Solutions & Enterprise Routing Hub.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="content-section alt">
+        <h2 class="section-header">
+            <span class="verb">Partnership is the</span><br>
+            <span class="noun">Beginning.</span>
+        </h2>
+        <p class="section-content">Our engineers are ready to architect your next infrastructure upgrade. Initiate contact to schedule a structural system review.</p>
+        <button class="btn-back" style="margin-top: 2rem; margin-left: 4rem; border-color: var(--text-dark); color: var(--text-dark);">INITIATE_CONSULTATION</button>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script src="./app.js?v=21"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solutions India | Contact Us</title>
+    
+    <link rel="stylesheet" href="styles.css?v=2">
+    <style>
+        .page-header {
+            padding: 4rem 4rem 0rem 4rem;
+        }
+        .form-container {
+            margin-top: 4rem;
+            margin-left: 4rem;
+            max-width: 600px;
+            background: var(--surface-alt);
+            padding: 3rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .input-group {
+            margin-bottom: 2rem;
+        }
+        .input-group label {
+            display: block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid rgba(0,0,0,0.2);
+            padding: 0.5rem 0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input:focus, .input-group textarea:focus {
+            border-bottom-color: var(--signal-red);
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <header>
+            <div class="brand">Solutions<span>_</span>India</div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="about.html">About</a>
+                <a href="products.html">Products</a>
+                <a href="branches.html">Branches</a>
+                <a href="contact.html" style="color: var(--signal-red);">Contact</a>
+            </nav>
+        </header>
+    </div>
+
+    <section class="content-section">
+        <h2 class="section-header">
+            <span class="verb">Partnership is the</span><br>
+            <span class="noun">Beginning.</span>
+        </h2>
+        <p class="section-content">Our engineers are ready to architect your next infrastructure upgrade. Initiate contact to schedule a structural system review.</p>
+        
+        <div class="form-container">
+            <div class="input-group">
+                <label>System Administrator (Name)</label>
+                <input type="text" placeholder="Enter name">
+            </div>
+            <div class="input-group">
+                <label>Secure Uplink (Email)</label>
+                <input type="email" placeholder="Enter email">
+            </div>
+            <div class="input-group">
+                <label>Deployment Requirements</label>
+                <textarea rows="4" placeholder="Detail your architectural needs..."></textarea>
+            </div>
+            <button class="btn-back" style="border-color: var(--text-dark); color: var(--text-dark); width: 100%;">INITIATE_CONSULTATION</button>
+        </div>
+    </section>
+</body>
+</html>
