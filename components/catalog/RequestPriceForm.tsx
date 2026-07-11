@@ -7,6 +7,8 @@ import type { Product, ProductSpec } from "@/data/products";
 
 import styles from "./catalog.module.css";
 
+const SITE_ORIGIN = "https://solutionsind.com";
+
 export type RequestProduct = Pick<
   Product,
   "brand" | "category" | "model" | "name" | "sku"
@@ -51,7 +53,7 @@ function buildRequestText(
   const configuration = product.specs
     .map((spec) => `- ${spec.label}: ${spec.value}`)
     .join("\n");
-  const productUrl = window.location.href.split("#")[0];
+  const productUrl = `${SITE_ORIGIN}${window.location.pathname}`;
 
   return [
     "NEXT SOLUTIONS — PRICE REQUEST",

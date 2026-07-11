@@ -5,5 +5,11 @@ import nextTypescript from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
-  globalIgnores([".next/**", "legacy-static/**", "react-version/**"]),
+  globalIgnores([
+    ".next/**",
+    ".open-next/**",
+    ".wrangler/**",
+    "legacy-static/**",
+    "react-version/**",
+  ]),
 ]);
