@@ -6,3 +6,9 @@ coverage/
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# OpenNext / Cloudflare
+.open-next/
+.wrangler/
+.dev.vars*
+!.dev.vars.example

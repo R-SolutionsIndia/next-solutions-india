@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "next-solutions-india",
+  "compatibility_date": "2026-07-11",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference service binding. This must match the Worker name.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "next-solutions-india"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  }
+}
