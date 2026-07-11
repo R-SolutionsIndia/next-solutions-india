@@ -1,1 +1,8 @@
 react-version/
+node_modules/
+.next/
+out/
+coverage/
+*.log
+*.tsbuildinfo
+.DS_Store

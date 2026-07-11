@@ -1,0 +1,264 @@
+.header {
+  position: relative;
+  z-index: 30;
+  height: var(--header-height);
+  border-bottom: 1px solid;
+}
+
+.dark {
+  color: var(--white);
+  background: var(--black);
+  border-color: var(--line-dark);
+}
+
+.light {
+  color: var(--black);
+  background: var(--white);
+  border-color: var(--line-light);
+}
+
+.headerInner {
+  width: min(calc(100% - 64px), var(--content-width));
+  height: 100%;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 230px 1fr auto;
+  align-items: center;
+  gap: 32px;
+}
+
+.logoLink {
+  width: 230px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.logoMark {
+  position: relative;
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+}
+
+.logoSource {
+  position: absolute;
+  top: -8px;
+  left: -43px;
+  width: 130px;
+  max-width: none;
+  height: auto;
+}
+
+.dark .logoSource {
+  filter: invert(1) grayscale(1);
+  mix-blend-mode: screen;
+}
+
+.wordmark {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+}
+
+.wordmark strong {
+  font-family: var(--font-mono), monospace;
+  font-size: 16px;
+  letter-spacing: 0.055em;
+  white-space: nowrap;
+}
+
+.wordmark small {
+  padding-top: 4px;
+  border-top: 1px solid currentColor;
+  font-family: var(--font-sans), sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.desktopNav {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: clamp(28px, 4vw, 64px);
+  font-size: 15px;
+}
+
+.desktopNav a {
+  position: relative;
+  padding-block: 28px;
+}
+
+.desktopNav a::after {
+  position: absolute;
+  right: 0;
+  bottom: 18px;
+  left: 0;
+  height: 2px;
+  content: "";
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 200ms var(--ease-out);
+}
+
+.desktopNav a:hover::after,
+.desktopNav .active::after {
+  transform: scaleX(1);
+}
+
+.requestLink {
+  min-width: 148px;
+  padding: 13px 22px;
+  border: 1px solid currentColor;
+  text-align: center;
+  font-weight: 600;
+  transition: color 180ms ease, background 180ms ease;
+}
+
+.dark .requestLink:hover {
+  color: var(--black);
+  background: var(--white);
+}
+
+.light .requestLink {
+  color: var(--white);
+  background: var(--black);
+}
+
+.menuButton,
+.mobileNav {
+  display: none;
+}
+
+.footer {
+  color: var(--white);
+  background: var(--black);
+  border-top: 1px solid var(--line-dark);
+}
+
+.footerInner {
+  width: min(calc(100% - 64px), var(--content-width));
+  margin-inline: auto;
+}
+
+.footerInner {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr 1fr;
+  gap: 64px;
+  padding: 72px 0 56px;
+}
+
+.footerInner strong {
+  font-family: var(--font-mono), monospace;
+  letter-spacing: 0.08em;
+}
+
+.footerInner p,
+.footerContact span,
+.footerCopyright {
+  color: var(--gray-500);
+}
+
+.footerCopyright {
+  display: block;
+  margin-top: 24px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+}
+
+.footerLinks {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  gap: 20px 48px;
+}
+
+.footerLinks a,
+.footerContact a {
+  transition: color 150ms ease;
+}
+
+.footerLinks a:hover,
+.footerContact a:hover {
+  color: var(--gray-300);
+}
+
+.footerContact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+@media (max-width: 1080px) {
+  .headerInner {
+    width: min(calc(100% - 32px), var(--content-width));
+    grid-template-columns: 1fr auto;
+  }
+
+  .desktopNav,
+  .requestLink {
+    display: none;
+  }
+
+  .menuButton {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    color: inherit;
+    background: transparent;
+  }
+
+  .mobileNav {
+    position: absolute;
+    top: var(--header-height);
+    right: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 24px 28px;
+    border-bottom: 1px solid currentColor;
+    color: inherit;
+    background: inherit;
+  }
+
+  .mobileNav a {
+    padding: 14px 4px;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  }
+
+  .footerInner {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding-top: 52px;
+  }
+
+  .footerContact {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .logoLink {
+    width: 196px;
+  }
+
+  .wordmark strong {
+    font-size: 14px;
+  }
+
+  .wordmark small {
+    font-size: 8px;
+  }
+
+  .footerLinks {
+    grid-template-columns: repeat(2, max-content);
+  }
+
+}
