@@ -16,6 +16,13 @@ type CameraRigProps = {
 const POSITION_EPSILON = 0.008;
 const TARGET_EPSILON = 0.006;
 
+function getTargetFov(focus: string, mobile: boolean) {
+  if (mobile) {
+    return focus === "overview" ? 52 : focus === "rack" || focus === "workstation" ? 46 : 43;
+  }
+  return focus === "overview" ? 37 : focus === "rack" || focus === "workstation" ? 33 : 30;
+}
+
 export function CameraRig({ controlsRef }: CameraRigProps) {
   const focus = useSceneStore((state) => state.focus);
   const reducedMotion = useSceneStore((state) => state.reducedMotion);
@@ -27,20 +34,29 @@ export function CameraRig({ controlsRef }: CameraRigProps) {
   const liveTarget = useRef(new Vector3(...CAMERA_PRESETS.overview.target));
 
   useEffect(() => {
-    const preset = CAMERA_PRESETS[focus];
-    desiredPosition.current.set(...preset.position);
-    desiredTarget.current.set(...preset.target);
-    if (mobile) {
-      const distanceMultiplier = focus === "overview" ? 1.28 : 1.2;
-      desiredPosition.current
-        .sub(desiredTarget.current)
-        .multiplyScalar(distanceMultiplier)
-        .add(desiredTarget.current);
-      if (focus === "overview") desiredTarget.current.x += 0.16;
-    }
-    isTransitioning.current = true;
+    const updatePreset = () => {
+      const preset = CAMERA_PRESETS[focus];
+      desiredPosition.current.set(...preset.position);
+      desiredTarget.current.set(...preset.target);
+      if (mobile) {
+        const distanceMultiplier = focus === "overview" ? 1.25 : 1.18;
+        desiredPosition.current
+          .sub(desiredTarget.current)
+          .multiplyScalar(distanceMultiplier)
+          .add(desiredTarget.current);
+        if (focus === "overview") {
+          desiredTarget.current.x += 0.22;
+          desiredTarget.current.y += 0.24;
+        }
+      }
+      isTransitioning.current = true;
+    };
 
-  }, [focus, mobile]);
+    const mechanicalClearanceDelay =
+      focus !== "overview" && focus !== "rack" && !reducedMotion ? 220 : 0;
+    const timer = window.setTimeout(updatePreset, mechanicalClearanceDelay);
+    return () => window.clearTimeout(timer);
+  }, [focus, mobile, reducedMotion]);
 
   useFrame(({ camera }, delta) => {
     const controls = controlsRef.current;
@@ -51,7 +67,7 @@ export function CameraRig({ controlsRef }: CameraRigProps) {
         camera.position.copy(desiredPosition.current);
         liveTarget.current.copy(desiredTarget.current);
         camera.lookAt(liveTarget.current);
-        perspectiveCamera.fov = mobile ? (focus === "overview" ? 52 : 46) : focus === "overview" ? 43 : 38;
+        perspectiveCamera.fov = getTargetFov(focus, mobile);
         perspectiveCamera.updateProjectionMatrix();
         isTransitioning.current = false;
       }
@@ -77,7 +93,7 @@ export function CameraRig({ controlsRef }: CameraRigProps) {
     liveTarget.current.z = MathUtils.damp(liveTarget.current.z, desiredTarget.current.z, damping, delta);
     perspectiveCamera.fov = MathUtils.damp(
       perspectiveCamera.fov,
-      mobile ? (focus === "overview" ? 52 : 46) : focus === "overview" ? 43 : 38,
+      getTargetFov(focus, mobile),
       damping,
       delta,
     );

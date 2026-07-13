@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { useSceneStore, type ProductTarget } from "@/lib/scene-store";
 
@@ -27,32 +27,15 @@ function supportsWebGL() {
 
 function StaticFallback() {
   const inspectProduct = useSceneStore((state) => state.inspectProduct);
-  const focusTower = useSceneStore((state) => state.focusTower);
+  const focusRack = useSceneStore((state) => state.focusRack);
+  const focusWorkstation = useSceneStore((state) => state.focusWorkstation);
   const focus = useSceneStore((state) => state.focus);
 
   return (
-    <div className={styles.fallback} aria-label="Gaming setup product explorer">
+    <div className={styles.fallback} aria-label="Interactive infrastructure lab">
       <div className={styles.fallbackPoster} aria-hidden="true" />
       <div className={styles.fallbackActions}>
-        {focus === "overview" ? (
-          <>
-            <button className={styles.fallbackButton} onClick={focusTower} type="button">
-              Open tower
-            </button>
-            <button className={styles.fallbackButton} onClick={() => inspectProduct("monitor")} type="button">
-              Monitor
-            </button>
-            <button className={styles.fallbackButton} onClick={() => inspectProduct("keyboard")} type="button">
-              Keyboard
-            </button>
-            <button className={styles.fallbackButton} onClick={() => inspectProduct("mouse")} type="button">
-              Mouse
-            </button>
-            <button className={styles.fallbackButton} onClick={() => inspectProduct("external-ssd")} type="button">
-              External SSD
-            </button>
-          </>
-        ) : (
+        {focus === "rack" ? (
           <>
             <button className={styles.fallbackButton} onClick={() => inspectProduct("sata-ssd")} type="button">
               SATA SSD
@@ -70,6 +53,36 @@ function StaticFallback() {
               HDD
             </button>
           </>
+        ) : focus === "workstation" ? (
+          <>
+            <button className={styles.fallbackButton} onClick={() => inspectProduct("monitor")} type="button">
+              Display
+            </button>
+            <button className={styles.fallbackButton} onClick={() => inspectProduct("keyboard")} type="button">
+              Keyboard
+            </button>
+            <button className={styles.fallbackButton} onClick={() => inspectProduct("mouse")} type="button">
+              Mouse
+            </button>
+            <button className={styles.fallbackButton} onClick={() => inspectProduct("external-ssd")} type="button">
+              External SSD
+            </button>
+          </>
+        ) : (
+          <>
+            <button className={styles.fallbackButton} onClick={focusRack} type="button">
+              Components
+            </button>
+            <button className={styles.fallbackButton} onClick={() => inspectProduct("nas")} type="button">
+              NAS
+            </button>
+            <button className={styles.fallbackButton} onClick={() => inspectProduct("network-switch")} type="button">
+              Network
+            </button>
+            <button className={styles.fallbackButton} onClick={focusWorkstation} type="button">
+              Setup
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -80,8 +93,10 @@ function ProductDrawer({ productId }: { productId: ProductTarget }) {
   const product = SCENE_PRODUCTS[productId];
   const closeDrawer = useSceneStore((state) => state.closeDrawer);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     closeRef.current?.focus({ preventScroll: true });
 
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -89,15 +104,38 @@ function ProductDrawer({ productId }: { productId: ProductTarget }) {
     };
 
     window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      previouslyFocused?.focus?.({ preventScroll: true });
+    };
   }, [closeDrawer, productId]);
+
+  const trapFocus = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Tab") return;
+    const focusable = drawerRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+    );
+    if (!focusable?.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     <aside
+      ref={drawerRef}
       className={styles.drawer}
       aria-label={`${product.name} details`}
       aria-modal="true"
       role="dialog"
+      onKeyDown={trapFocus}
     >
       <button
         ref={closeRef}
@@ -118,7 +156,7 @@ function ProductDrawer({ productId }: { productId: ProductTarget }) {
       </ul>
       {product.brands.length > 0 ? (
         <>
-          <p className={styles.brandLabel}>Useful catalogue filters</p>
+          <p className={styles.brandLabel}>Configure by</p>
           <p className={styles.brands}>{product.brands.join("  ·  ")}</p>
         </>
       ) : null}
@@ -130,7 +168,11 @@ function ProductDrawer({ productId }: { productId: ProductTarget }) {
       ) : null}
       <div className={styles.drawerActions}>
         <Link className={styles.drawerPrimary} href={product.href}>
-          {product.brands.length > 0 ? "Configure options" : "Browse verified products"}
+          {product.href === "/contact"
+            ? "Talk to Next Solutions"
+            : product.brands.length > 0
+              ? "Configure options"
+              : "Browse verified products"}
         </Link>
         <button className={styles.drawerSecondary} onClick={closeDrawer} type="button">
           Return to setup
@@ -148,13 +190,59 @@ const internalComponents: readonly [ProductTarget, string][] = [
   ["hdd", "Hard drive"],
 ];
 
+const workstationComponents: readonly [ProductTarget, string][] = [
+  ["monitor", "Display"],
+  ["keyboard", "Keyboard"],
+  ["mouse", "Mouse"],
+  ["external-ssd", "External SSD"],
+];
+
+function HardwareSelectorCard({
+  title,
+  eyebrow,
+  hint,
+  items,
+  onSelect,
+}: {
+  title: string;
+  eyebrow: string;
+  hint: string;
+  items: readonly [ProductTarget, string][];
+  onSelect: (target: ProductTarget) => void;
+}) {
+  const titleId = title === "Choose a component"
+    ? "compute-components-title"
+    : "workstation-components-title";
+
+  return (
+    <section className={styles.componentSelectorCard} aria-labelledby={titleId}>
+      <header className={styles.componentSelectorHeader}>
+        <p className={styles.componentSelectorEyebrow}>{eyebrow}</p>
+        <h2 className={styles.componentSelectorTitle} id={titleId}>
+          {title}
+        </h2>
+        <p className={styles.componentSelectorHint}>{hint}</p>
+      </header>
+      <div className={styles.componentRail} aria-label={`${title} options`}>
+        {items.map(([target, label], index) => (
+          <button key={target} type="button" onClick={() => onSelect(target)}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            {label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function GamingHero({ className = "" }: { className?: string }) {
   const [webGLAvailable, setWebGLAvailable] = useState<boolean | null>(null);
   const drawerProduct = useSceneStore((state) => state.drawerProduct);
   const focus = useSceneStore((state) => state.focus);
   const hasEntered = useSceneStore((state) => state.hasEntered);
   const enterScene = useSceneStore((state) => state.enterScene);
-  const focusTower = useSceneStore((state) => state.focusTower);
+  const focusRack = useSceneStore((state) => state.focusRack);
+  const focusWorkstation = useSceneStore((state) => state.focusWorkstation);
   const resetScene = useSceneStore((state) => state.resetScene);
   const inspectProduct = useSceneStore((state) => state.inspectProduct);
   const setReducedMotion = useSceneStore((state) => state.setReducedMotion);
@@ -178,22 +266,24 @@ export default function GamingHero({ className = "" }: { className?: string }) {
       className={`${styles.hero} ${className}`}
       data-focus={focus}
       data-drawer-open={drawerProduct !== null ? "true" : "false"}
-      aria-labelledby="gaming-hero-title"
+      aria-labelledby="infrastructure-hero-title"
     >
-      <div className={styles.canvasShell}>
+      <div className={styles.canvasShell} inert={drawerProduct ? true : undefined}>
         {webGLAvailable === false ? <StaticFallback /> : <GamingCanvas />}
       </div>
 
       <div className={styles.copy} inert={focus !== "overview" ? true : undefined}>
-        <h1 className={styles.title} id="gaming-hero-title">
-          Built for What&apos;s Next.
+        <h1 className={styles.title} id="infrastructure-hero-title">
+          Built for
+          <br />
+          What&apos;s Next.
         </h1>
         <p className={styles.lede}>
-          Explore the setup. Inspect the hardware. Find the right configuration.
+          Explore the infrastructure. Inspect the hardware. Find the right configuration.
         </p>
         <div className={styles.actions}>
           <button className={styles.primaryAction} onClick={enterScene} type="button">
-            Explore setup
+            Explore infrastructure
           </button>
           <Link className={styles.secondaryAction} href="/products">
             Browse products
@@ -203,34 +293,35 @@ export default function GamingHero({ className = "" }: { className?: string }) {
 
       {focus !== "overview" && drawerProduct === null ? (
         <button className={styles.backControl} onClick={resetScene} type="button">
-          <span aria-hidden="true">←</span> Return to setup
+          <span aria-hidden="true">←</span>{" "}
+          {focus === "workstation" ? "Return to overview" : "Return to setup"}
         </button>
       ) : null}
 
-      {focus === "tower" ? (
-        <>
-          <p className={styles.modeLabel} aria-live="polite">
-            <span>Case open</span>
-            Select a component
-          </p>
-          <div className={styles.componentRail} aria-label="Tower components">
-            {internalComponents.map(([target, label], index) => (
-              <button key={target} type="button" onClick={() => inspectProduct(target)}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </>
+      {focus === "rack" ? (
+        <HardwareSelectorCard
+          eyebrow="Compute tray deployed"
+          hint="Select installed hardware to inspect it."
+          items={internalComponents}
+          onSelect={inspectProduct}
+          title="Choose a component"
+        />
+      ) : focus === "workstation" ? (
+        <HardwareSelectorCard
+          eyebrow="Operator setup"
+          hint="Select hardware on the desk or use the choices below."
+          items={workstationComponents}
+          onSelect={inspectProduct}
+          title="Choose workstation hardware"
+        />
       ) : null}
 
       {focus === "overview" ? (
-        <div className={styles.mobileSceneMenu} aria-label="Explore setup hardware">
-          <button type="button" onClick={focusTower}>Tower</button>
-          <button type="button" onClick={() => inspectProduct("monitor")}>Monitors</button>
-          <button type="button" onClick={() => inspectProduct("keyboard")}>Keyboard</button>
-          <button type="button" onClick={() => inspectProduct("mouse")}>Mouse</button>
-          <button type="button" onClick={() => inspectProduct("external-ssd")}>External SSD</button>
+        <div className={styles.mobileSceneMenu} aria-label="Explore infrastructure hardware">
+          <button type="button" onClick={focusRack}>Components</button>
+          <button type="button" onClick={() => inspectProduct("nas")}>NAS</button>
+          <button type="button" onClick={() => inspectProduct("network-switch")}>Network</button>
+          <button type="button" onClick={focusWorkstation}>Setup</button>
         </div>
       ) : null}
 
@@ -240,10 +331,12 @@ export default function GamingHero({ className = "" }: { className?: string }) {
         aria-hidden="true"
       >
         <span className={styles.dragGlyph}>← ◉ →</span>
-        <span>Drag to inspect</span>
+        <span>Drag to inspect infrastructure</span>
       </div>
 
-      <p className={styles.representative}>Representative gaming setup</p>
+      {focus === "overview" ? (
+        <p className={styles.representative}>Representative infrastructure lab</p>
+      ) : null}
       {drawerProduct ? <ProductDrawer productId={drawerProduct} /> : null}
       <p className={styles.srOnly} aria-live="polite">
         {drawerProduct ? `${SCENE_PRODUCTS[drawerProduct].name} details opened.` : ""}

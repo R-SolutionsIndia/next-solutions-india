@@ -4,13 +4,12 @@
   --scene-line: rgba(255, 255, 255, 0.24);
   isolation: isolate;
   position: relative;
-  min-height: 680px;
-  height: max(680px, calc(100svh - var(--header-height, 76px)));
+  min-height: 720px;
+  height: max(720px, calc(100svh - var(--header-height, 72px)));
   overflow: hidden;
   background:
-    radial-gradient(circle at 75% 42%, rgba(115, 176, 205, 0.1), transparent 27%),
-    radial-gradient(circle at 58% 72%, rgba(255, 255, 255, 0.055), transparent 34%),
-    #000;
+    radial-gradient(circle at 76% 48%, rgba(112, 215, 255, 0.08), transparent 29%),
+    #020304;
   color: var(--scene-white);
 }
 
@@ -20,14 +19,25 @@
   z-index: 0;
 }
 
+.hero[data-drawer-open="true"] .canvasShell {
+  pointer-events: none;
+}
+
 .canvasShell::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
   content: "";
   background:
-    linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.92) 20%, rgba(0, 0, 0, 0.18) 43%, transparent 57%),
-    linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent 27%);
+    linear-gradient(
+      90deg,
+      #020304 0%,
+      rgba(2, 3, 4, 0.98) 18%,
+      rgba(2, 3, 4, 0.78) 28%,
+      rgba(2, 3, 4, 0.18) 38%,
+      transparent 43%
+    ),
+    linear-gradient(0deg, rgba(2, 3, 4, 0.42), transparent 24%);
 }
 
 .canvas {
@@ -64,7 +74,7 @@
   background:
     linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.86) 24%, transparent 56%),
     linear-gradient(0deg, rgba(0, 0, 0, 0.72), transparent 38%),
-    url("/scene/gaming-setup-poster.webp") 72% 50% / cover no-repeat,
+    url("/scene/data-centre-fallback.webp") 72% 50% / cover no-repeat,
     radial-gradient(circle at 75% 42%, #171717 0, #050505 37%, #000 68%);
 }
 
@@ -97,29 +107,30 @@
 
 .copy {
   position: absolute;
-  top: 50%;
-  left: clamp(24px, 4.6vw, 76px);
+  top: 27%;
+  left: clamp(40px, 3.4vw, 58px);
   z-index: 3;
-  width: min(420px, 34vw);
-  transform: translateY(-42%);
+  width: min(540px, 34vw);
+  transform: none;
   transition: opacity 280ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hero:not([data-focus="overview"]) .copy {
   opacity: 0;
   pointer-events: none;
-  transform: translate(-24px, -42%);
+  transform: translateX(-24px);
 }
 
 .title {
-  max-width: 9ch;
+  max-width: none;
   margin: 0;
   color: #fff;
-  font-family: var(--font-sans), "Helvetica Neue", sans-serif;
-  font-size: clamp(54px, 5vw, 82px);
-  font-weight: 760;
-  line-height: 0.94;
-  letter-spacing: -0.045em;
+  font-family: var(--font-display), "Arial Narrow", "Helvetica Neue", sans-serif;
+  font-size: clamp(58px, 6vw, 96px);
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
@@ -151,14 +162,14 @@
 
 .primaryAction {
   border: 1px solid #fff;
-  color: #050505;
-  background: #fff;
+  color: #fff;
+  background: rgba(2, 3, 4, 0.74);
   transition: color 180ms ease, background 180ms ease;
 }
 
 .primaryAction:hover {
-  color: #fff;
-  background: #111;
+  color: #050505;
+  background: #fff;
 }
 
 .secondaryAction {
@@ -221,13 +232,48 @@
   pointer-events: auto;
 }
 
+.hotspot::before,
+.hotspot::after {
+  position: absolute;
+  top: 50%;
+  pointer-events: none;
+  content: "";
+}
+
+.hotspot::before {
+  width: 56px;
+  height: 1px;
+  background: rgba(235, 247, 252, 0.58);
+}
+
+.hotspot::after {
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #eaf8ff;
+  box-shadow: 0 0 12px rgba(114, 216, 255, 0.72);
+  transform: translate(-50%, -50%);
+}
+
+.hotspotRight::before {
+  left: 50%;
+}
+
+.hotspotLeft::before {
+  right: 50%;
+}
+
 .hotspotButton {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 9px 13px 9px 10px;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 106px;
+  min-height: 32px;
+  padding: 6px 8px 6px 11px;
+  font-size: 9px;
   white-space: nowrap;
   cursor: pointer;
   backdrop-filter: blur(12px);
@@ -235,21 +281,40 @@
   transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
-.hotspotButton::before {
-  width: 8px;
-  height: 8px;
-  border: 1px solid #e8f8ff;
-  border-radius: 50%;
-  content: "";
-  background: #dff6ff;
-  box-shadow: 0 0 0 4px rgba(176, 225, 247, 0.12), 0 0 16px rgba(176, 225, 247, 0.65);
+.hotspotRight .hotspotButton {
+  transform: translateX(112px);
+}
+
+.hotspotLeft .hotspotButton {
+  transform: translateX(-112px);
+}
+
+.hotspotButton::after {
+  display: grid;
+  width: 17px;
+  height: 18px;
+  place-items: center;
+  border-left: 1px solid rgba(224, 241, 250, 0.42);
+  content: "+";
+  color: #dff6ff;
+  font-size: 14px;
+  line-height: 1;
 }
 
 .hotspotButton:hover,
 .hotspotButton:focus-visible {
   border-color: #fff;
   background: #0b0b0b;
-  transform: translateY(-2px);
+}
+
+.hotspotRight .hotspotButton:hover,
+.hotspotRight .hotspotButton:focus-visible {
+  transform: translate(112px, -2px);
+}
+
+.hotspotLeft .hotspotButton:hover,
+.hotspotLeft .hotspotButton:focus-visible {
+  transform: translate(-112px, -2px);
 }
 
 .backControl {
@@ -269,37 +334,50 @@
   cursor: pointer;
 }
 
-.modeLabel {
+.componentSelectorCard {
   position: absolute;
-  top: 168px;
+  top: 144px;
   left: clamp(24px, 4.6vw, 76px);
-  z-index: 4;
-  display: grid;
-  gap: 7px;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.62);
-  font: 600 10px/1.15 var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  animation: modeIn 260ms ease both;
+  z-index: 5;
+  width: min(272px, 23vw);
+  overflow: hidden;
+  border: 1px solid rgba(196, 226, 239, 0.34);
+  background: rgba(3, 6, 8, 0.91);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(18px);
+  animation: modeIn 280ms ease both;
 }
 
-.modeLabel span {
+.componentSelectorHeader {
+  padding: 17px 17px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.componentSelectorEyebrow,
+.componentSelectorHint {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font: 600 9px/1.35 var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.componentSelectorTitle {
+  margin: 8px 0 0;
   color: #effaff;
-  font-size: 16px;
+  font: 600 19px/1.05 var(--font-display), Arial, sans-serif;
   letter-spacing: 0.04em;
 }
 
+.componentSelectorHint {
+  margin-top: 8px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
 .componentRail {
-  position: absolute;
-  top: 50%;
-  right: clamp(24px, 4vw, 64px);
-  z-index: 5;
   display: grid;
-  width: min(210px, 18vw);
-  border-top: 1px solid rgba(255, 255, 255, 0.32);
-  transform: translateY(-42%);
-  animation: modeIn 280ms ease both;
+  width: 100%;
 }
 
 .componentRail button {
@@ -347,14 +425,27 @@
   z-index: 6;
   display: flex;
   flex-direction: column;
-  width: min(420px, 92vw);
-  padding: clamp(92px, 12vh, 132px) clamp(24px, 3vw, 44px) 38px;
+  width: min(408px, 92vw);
+  padding: clamp(72px, 9vh, 94px) clamp(24px, 3vw, 40px) 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-left: 1px solid #292929;
   color: #fff;
-  background: rgba(4, 4, 4, 0.97);
+  background: rgba(3, 5, 6, 0.98);
   box-shadow: -30px 0 90px rgba(0, 0, 0, 0.68);
   backdrop-filter: blur(24px);
   animation: drawerIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.drawer::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  content: "";
+  background: #70d7ff;
+  box-shadow: 0 0 18px rgba(112, 215, 255, 0.42);
 }
 
 .drawerClose {
@@ -383,35 +474,35 @@
 .drawerTitle {
   margin: 0;
   font-family: var(--font-sans), "Helvetica Neue", sans-serif;
-  font-size: clamp(36px, 4vw, 54px);
+  font-size: clamp(36px, 3.6vw, 48px);
   font-weight: 720;
   line-height: 0.98;
   letter-spacing: -0.04em;
 }
 
 .drawerDescription {
-  margin: 23px 0 0;
+  margin: 18px 0 0;
   color: #aeaea9;
   font: 400 14px/1.65 var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .specList {
   display: grid;
-  margin: 32px 0 0;
+  margin: 24px 0 0;
   padding: 0;
   border-top: 1px solid #292929;
   list-style: none;
 }
 
 .specList li {
-  padding: 14px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #292929;
   color: #e8e8e4;
   font: 500 12px/1.3 var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .brandLabel {
-  margin: 29px 0 9px;
+  margin: 20px 0 9px;
   color: #747470;
   font: 600 10px/1 var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: 0.12em;
@@ -425,7 +516,7 @@
 }
 
 .drawerNote {
-  margin: 18px 0 0;
+  margin: 13px 0 0;
   color: #9b9b98;
   font: 500 12px/1.5 var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -434,7 +525,7 @@
   display: grid;
   gap: 10px;
   margin-top: auto;
-  padding-top: 30px;
+  padding-top: 18px;
 }
 
 .drawerPrimary,
@@ -493,7 +584,13 @@
 
   .canvasShell::after {
     background:
-      linear-gradient(180deg, rgba(0, 0, 0, 0.92) 7%, transparent 35%),
+      linear-gradient(
+        180deg,
+        #000 0%,
+        rgba(0, 0, 0, 0.99) 43%,
+        rgba(0, 0, 0, 0.88) 56%,
+        transparent 76%
+      ),
       linear-gradient(0deg, #000 1%, transparent 37%);
   }
 
@@ -518,17 +615,20 @@
   }
 
   .actions {
-    gap: 22px;
+    gap: 14px;
     margin-top: 20px;
   }
 
   .primaryAction {
     min-height: 46px;
-    padding: 0 20px;
+    padding: 0 16px;
+    font-size: 11px;
+    white-space: nowrap;
   }
 
   .secondaryAction {
-    font-size: 12px;
+    font-size: 11px;
+    white-space: nowrap;
   }
 
   .dragHint {
@@ -548,20 +648,29 @@
     left: 22px;
   }
 
-  .modeLabel {
-    top: 148px;
-    left: 22px;
-  }
-
-  .componentRail {
+  .componentSelectorCard {
     top: auto;
     right: 22px;
     bottom: 24px;
     left: 22px;
-    display: flex;
     width: auto;
-    border-left: 1px solid rgba(255, 255, 255, 0.24);
-    transform: none;
+  }
+
+  .componentSelectorHeader {
+    padding: 13px 14px 11px;
+  }
+
+  .componentSelectorTitle {
+    margin-top: 5px;
+    font-size: 16px;
+  }
+
+  .componentSelectorHint {
+    margin-top: 5px;
+  }
+
+  .componentRail {
+    display: flex;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -702,8 +811,7 @@
 @media (prefers-reduced-motion: reduce) {
   .loading::before,
   .drawer,
-  .modeLabel,
-  .componentRail {
+  .componentSelectorCard {
     animation: none;
   }
 

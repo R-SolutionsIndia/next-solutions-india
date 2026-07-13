@@ -1,49 +1,141 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
-import { ContactShadows, Html, OrbitControls, RoundedBox } from "@react-three/drei";
-import { Suspense, useRef } from "react";
+import { ContactShadows, Html, OrbitControls } from "@react-three/drei";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Suspense, useMemo, useRef, type RefObject } from "react";
 import { MathUtils, type Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
-import { useSceneStore, type ProductTarget } from "@/lib/scene-store";
+import { useSceneStore, type ProductTarget, type SceneTarget } from "@/lib/scene-store";
 
 import { CameraRig } from "./CameraRig";
 import {
-  ExternalSSDModel,
-  KeyboardModel,
-  MonitorModel,
-  MouseModel,
-  TowerCaseModel,
-  TowerInternalsModel,
-} from "./HardwareModels";
+  COMPUTE_TRAY_COMPONENT_TRANSFORMS,
+  ComputeServiceTray,
+  DataCenterEnvironment,
+  DEMO_RACK_LOCAL_Y,
+  DemoRackFrame,
+  NasApplianceModel,
+  NetworkSwitchModel,
+  OPERATOR_EQUIPMENT_TRANSFORMS,
+  OperatorWorkstation,
+  RackServerUnit,
+  RackStorageArrayModel,
+  UpsModel,
+  type ComputeComponentId,
+  type ComputeComponentRefs,
+  type ModelSelectHandler,
+  type OperatorEquipmentId,
+  type OperatorEquipmentRefs,
+} from "./DataCenterModels";
 import styles from "./GamingHero.module.css";
+import { CAMERA_PRESETS } from "./scene-data";
 
-const INTERNAL_TARGETS = new Set([
-  "tower",
+const COMPUTE_COMPONENTS: readonly ComputeComponentId[] = [
   "sata-ssd",
   "nvme-ssd",
   "ram",
   "gpu",
   "hdd",
-]);
+];
+
+const OPERATOR_EQUIPMENT: readonly OperatorEquipmentId[] = [
+  "primary-monitor",
+  "keyboard",
+  "mouse",
+  "external-ssd",
+];
+
+const EQUIPMENT_TO_PRODUCT: Record<OperatorEquipmentId, ProductTarget> = {
+  "primary-monitor": "monitor",
+  keyboard: "keyboard",
+  mouse: "mouse",
+  "external-ssd": "external-ssd",
+};
+
+const COMPUTE_PRESENT_SCALE: Record<ComputeComponentId, number> = {
+  "sata-ssd": 3.25,
+  "nvme-ssd": 5.6,
+  ram: 3.15,
+  gpu: 2.25,
+  hdd: 2.65,
+};
+
+const COMPUTE_PRESENT_LOCAL_X: Record<ComputeComponentId, number> = {
+  "sata-ssd": -1.58,
+  "nvme-ssd": -1.55,
+  ram: -1.6,
+  gpu: -1.58,
+  hdd: -1.52,
+};
+
+const COMPUTE_PRESENT_ROTATION: Record<
+  ComputeComponentId,
+  [number, number, number]
+> = {
+  "sata-ssd": [1.16, 0.34, -0.08],
+  "nvme-ssd": [1.18, 0.3, -0.06],
+  ram: [-1.14, 0.34, -0.05],
+  gpu: [-0.08, 0.34, 0.025],
+  hdd: [1.12, 0.34, -0.08],
+};
+
+const OPERATOR_PRESENT_TRANSFORMS: Record<
+  OperatorEquipmentId,
+  { x: number; y: number; z: number; scale: number }
+> = {
+  "primary-monitor": { x: -1.35, y: 1.74, z: 1.18, scale: 1.2 },
+  keyboard: { x: -1.25, y: 1.28, z: 1.28, scale: 1.3 },
+  mouse: { x: -1.08, y: 1.3, z: 1.34, scale: 2 },
+  "external-ssd": { x: -1, y: 1.26, z: 1.28, scale: 2.55 },
+};
+const OPERATOR_PRESENT_ROTATIONS: Record<
+  OperatorEquipmentId,
+  [number, number, number]
+> = {
+  "primary-monitor": [-0.08, -0.24, 0.04],
+  keyboard: [0.48, -0.34, 0.04],
+  mouse: [0.55, -0.35, 0.02],
+  "external-ssd": [0.52, -0.4, 0.04],
+};
+
+const ENVIRONMENT_SCALE: [number, number, number] = [1.14, 1.08, 1.1];
+const RACK_POSITION: [number, number, number] = [1.25, 1.69, -0.15];
+const RACK_SCALE: [number, number, number] = [1.08, 1.02, 1.08];
+const WORKSTATION_POSITION: [number, number, number] = [3.85, 0, 0.16];
+const WORKSTATION_SCALE = 0.92;
+const OVERVIEW_RACK_OFFSET_X = 1.3;
+const OVERVIEW_WORKSTATION_OFFSET_X = 0.7;
+const OPERATOR_INSPECTION_RACK_OFFSET: [number, number] = [-1.65, -0.52];
+const RACK_INSPECTION_WORKSTATION_OFFSET: [number, number] = [1.45, -0.38];
+const PARKED_RACK_DOOR_OPEN = Math.PI / 2 / 2.72;
+const HERO_AMBIENT_RACKS = [
+  { position: [-1.45, 1.1, -2.72] as [number, number, number] },
+  { position: [-0.58, 1.1, -2.72] as [number, number, number] },
+] as const;
+
+function isComputeComponent(target: SceneTarget): target is ComputeComponentId {
+  return COMPUTE_COMPONENTS.includes(target as ComputeComponentId);
+}
 
 function Hotspot({
   label,
   position,
   onSelect,
+  side = "right",
 }: {
   label: string;
   position: [number, number, number];
   onSelect: () => void;
+  side?: "left" | "right";
 }) {
   return (
     <Html
-      className={styles.hotspot}
+      className={`${styles.hotspot} ${side === "left" ? styles.hotspotLeft : styles.hotspotRight}`}
       position={position}
       center
-      distanceFactor={4.7}
-      zIndexRange={[4, 0]}
+      distanceFactor={5.5}
+      zIndexRange={[12, 6]}
     >
       <button
         className={styles.hotspotButton}
@@ -59,176 +151,436 @@ function Hotspot({
   );
 }
 
-function Room() {
-  return (
-    <group>
-      <mesh position={[0.3, 1.35, -1.18]} receiveShadow>
-        <boxGeometry args={[6.2, 3.1, 0.08]} />
-        <meshStandardMaterial color="#080b0e" metalness={0.08} roughness={0.72} />
-      </mesh>
-      <mesh position={[0.8, 2.45, -0.86]} rotation={[0.04, 0, -0.04]}>
-        <boxGeometry args={[3.1, 0.035, 0.08]} />
-        <meshStandardMaterial color="#e8f6ff" emissive="#bde9ff" emissiveIntensity={3.2} />
-      </mesh>
-      <pointLight position={[0.8, 2.24, -0.45]} color="#bde9ff" intensity={5.5} distance={4.5} />
-      <mesh position={[0.55, -0.07, 0]} receiveShadow>
-        <boxGeometry args={[5.15, 0.14, 2.2]} />
-        <meshStandardMaterial color="#24272a" metalness={0.36} roughness={0.42} />
-      </mesh>
-      <mesh position={[0.55, -0.147, 0.87]}>
-        <boxGeometry args={[5.18, 0.025, 0.05]} />
-        <meshStandardMaterial color="#656b70" metalness={0.7} roughness={0.24} />
-      </mesh>
-      {[-1.42, 2.35].map((x) => (
-        <group key={x} position={[x, -0.76, -0.12]}>
-          <mesh castShadow>
-            <boxGeometry args={[0.1, 1.38, 0.1]} />
-            <meshStandardMaterial color="#25292c" metalness={0.72} roughness={0.28} />
-          </mesh>
-          <mesh position={[0, -0.7, 0]}>
-            <boxGeometry args={[0.42, 0.06, 0.5]} />
-            <meshStandardMaterial color="#181b1e" metalness={0.64} roughness={0.34} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
-
-function Setup() {
+function DataCenterSetup() {
   const focus = useSceneStore((state) => state.focus);
   const reducedMotion = useSceneStore((state) => state.reducedMotion);
-  const focusTower = useSceneStore((state) => state.focusTower);
+  const focusRack = useSceneStore((state) => state.focusRack);
+  const focusWorkstation = useSceneStore((state) => state.focusWorkstation);
   const inspectProduct = useSceneStore((state) => state.inspectProduct);
-  const towerOpen = INTERNAL_TARGETS.has(focus);
-  const showOverviewHotspots = focus === "overview";
-  const activeProduct = focus === "overview" || focus === "tower" ? null : focus;
-  const monitorGroup = useRef<Group>(null);
-  const keyboardGroup = useRef<Group>(null);
-  const mouseGroup = useRef<Group>(null);
-  const externalSsdGroup = useRef<Group>(null);
-  const deskProgress = useRef({ monitor: 0, keyboard: 0, mouse: 0, externalSsd: 0 });
+  const mobile = useThree((state) => state.size.width < 861);
 
-  const inspect = (target: ProductTarget) => inspectProduct(target);
+  const inspectionLighting = useMemo(() => {
+    if (focus === "overview" || focus === "rack") return null;
+
+    const [x, y, z] = CAMERA_PRESETS[focus].target;
+    const enclosure = focus === "nas" || focus === "network-switch";
+    const workstationSetup = focus === "workstation";
+
+    return {
+      key: [x + 1.25, y + 1.05, z + 2.35] as [number, number, number],
+      fill: [x - 1.4, y + 0.12, z + 1.55] as [number, number, number],
+      rim: [x + 0.25, y + 1.3, z - 0.85] as [number, number, number],
+      keyIntensity: enclosure ? 42 : workstationSetup ? 28 : 34,
+      fillIntensity: enclosure ? 24 : workstationSetup ? 15 : 18,
+    };
+  }, [focus]);
+
+  const trayRef = useRef<Group>(null);
+  const rackRootRef = useRef<Group>(null);
+  const workstationRootRef = useRef<Group>(null);
+  const nasRef = useRef<Group>(null);
+  const networkRef = useRef<Group>(null);
+  const sataRef = useRef<Group>(null);
+  const nvmeRef = useRef<Group>(null);
+  const ramRef = useRef<Group>(null);
+  const gpuRef = useRef<Group>(null);
+  const hddRef = useRef<Group>(null);
+  const primaryMonitorRef = useRef<Group>(null);
+  const keyboardRef = useRef<Group>(null);
+  const mouseRef = useRef<Group>(null);
+  const externalSsdRef = useRef<Group>(null);
+
+  const componentRefs = useMemo<ComputeComponentRefs>(
+    () => ({
+      "sata-ssd": sataRef,
+      "nvme-ssd": nvmeRef,
+      ram: ramRef,
+      gpu: gpuRef,
+      hdd: hddRef,
+    }),
+    [],
+  );
+
+  const equipmentRefs = useMemo<OperatorEquipmentRefs>(
+    () => ({
+      "primary-monitor": primaryMonitorRef,
+      keyboard: keyboardRef,
+      mouse: mouseRef,
+      "external-ssd": externalSsdRef,
+    }),
+    [],
+  );
+
+  const componentProgress = useRef<Record<ComputeComponentId, number>>({
+    "sata-ssd": 0,
+    "nvme-ssd": 0,
+    ram: 0,
+    gpu: 0,
+    hdd: 0,
+  });
+  const equipmentProgress = useRef<Record<OperatorEquipmentId, number>>({
+    "primary-monitor": 0,
+    keyboard: 0,
+    mouse: 0,
+    "external-ssd": 0,
+  });
+  const rackUnitProgress = useRef({ nas: 0, network: 0, tray: 0 });
+  const overviewLayoutProgress = useRef(1);
+  const operatorInspectionProgress = useRef(0);
+  const rackInspectionProgress = useRef(0);
+  const selectedOperatorEquipment = useRef<OperatorEquipmentId | null>(null);
+
+  const activeComponent = isComputeComponent(focus) ? focus : null;
+  const operatorInspection =
+    focus === "workstation" ||
+    OPERATOR_EQUIPMENT.some((equipment) => EQUIPMENT_TO_PRODUCT[equipment] === focus);
+  const rackInspection =
+    focus === "nas" || focus === "network-switch" || activeComponent !== null;
+  const rackDeployed = focus === "rack" || activeComponent !== null;
+  const showOverviewHotspots = focus === "overview";
+
+  const handleRackSelect: ModelSelectHandler = (event) => {
+    event.stopPropagation();
+    focusRack();
+  };
+
+  const handleWorkstationSelect: ModelSelectHandler = (event) => {
+    event.stopPropagation();
+    focusWorkstation();
+  };
+
+  const handleProductSelect =
+    (target: ProductTarget) => (event: ThreeEvent<MouseEvent>) => {
+      event.stopPropagation();
+      inspectProduct(target);
+    };
 
   useFrame((_, delta) => {
-    const progress = deskProgress.current;
-    progress.monitor = reducedMotion
-      ? Number(focus === "monitor")
-      : MathUtils.damp(progress.monitor, Number(focus === "monitor"), 4.6, delta);
-    progress.keyboard = reducedMotion
-      ? Number(focus === "keyboard")
-      : MathUtils.damp(progress.keyboard, Number(focus === "keyboard"), 4.6, delta);
-    progress.mouse = reducedMotion
-      ? Number(focus === "mouse")
-      : MathUtils.damp(progress.mouse, Number(focus === "mouse"), 4.6, delta);
-    progress.externalSsd = reducedMotion
-      ? Number(focus === "external-ssd")
-      : MathUtils.damp(progress.externalSsd, Number(focus === "external-ssd"), 4.6, delta);
+    overviewLayoutProgress.current = reducedMotion
+      ? Number(focus === "overview")
+      : MathUtils.damp(
+          overviewLayoutProgress.current,
+          Number(focus === "overview"),
+          3.8,
+          delta,
+        );
+    operatorInspectionProgress.current = reducedMotion
+      ? Number(operatorInspection)
+      : MathUtils.damp(
+          operatorInspectionProgress.current,
+          Number(operatorInspection),
+          4.8,
+          delta,
+        );
+    rackInspectionProgress.current = reducedMotion
+      ? Number(rackInspection)
+      : MathUtils.damp(
+          rackInspectionProgress.current,
+          Number(rackInspection),
+          4.8,
+          delta,
+        );
 
-    if (monitorGroup.current) {
-      const value = progress.monitor;
-      monitorGroup.current.position.set(value * 0.16, value * 0.1, value * 0.38);
-      monitorGroup.current.rotation.set(value * -0.03, value * -0.08, 0);
-      monitorGroup.current.scale.setScalar(1 + value * 0.07);
+    if (rackRootRef.current) {
+      rackRootRef.current.position.set(
+        RACK_POSITION[0] +
+          overviewLayoutProgress.current * OVERVIEW_RACK_OFFSET_X +
+          operatorInspectionProgress.current * OPERATOR_INSPECTION_RACK_OFFSET[0],
+        RACK_POSITION[1],
+        RACK_POSITION[2] +
+          operatorInspectionProgress.current * OPERATOR_INSPECTION_RACK_OFFSET[1],
+      );
     }
 
-    if (keyboardGroup.current) {
-      const value = progress.keyboard;
-      keyboardGroup.current.position.set(
-        0.28 + value * 0.26,
-        0.025 + value * 0.18,
-        0.55 + value * 0.48,
+    if (workstationRootRef.current) {
+      workstationRootRef.current.position.set(
+        WORKSTATION_POSITION[0] +
+          overviewLayoutProgress.current * OVERVIEW_WORKSTATION_OFFSET_X +
+          rackInspectionProgress.current * RACK_INSPECTION_WORKSTATION_OFFSET[0],
+        WORKSTATION_POSITION[1],
+        WORKSTATION_POSITION[2] +
+          rackInspectionProgress.current * RACK_INSPECTION_WORKSTATION_OFFSET[1],
       );
-      keyboardGroup.current.rotation.set(value * -0.12, -0.035 + value * -0.13, value * 0.035);
-      keyboardGroup.current.scale.setScalar(1 + value * 0.2);
     }
 
-    if (mouseGroup.current) {
-      const value = progress.mouse;
-      mouseGroup.current.position.set(
-        1.18 + value * 0.2,
-        0.055 + value * 0.18,
-        0.74 + value * 0.48,
+    const rackProgress = rackUnitProgress.current;
+    const trayTarget = focus === "overview" ? 0.55 : Number(rackDeployed);
+    rackProgress.tray = reducedMotion
+      ? trayTarget
+      : MathUtils.damp(rackProgress.tray, trayTarget, 4.4, delta);
+    rackProgress.nas = reducedMotion
+      ? Number(focus === "nas")
+      : MathUtils.damp(rackProgress.nas, Number(focus === "nas"), 4.8, delta);
+    rackProgress.network = reducedMotion
+      ? Number(focus === "network-switch")
+      : MathUtils.damp(
+          rackProgress.network,
+          Number(focus === "network-switch"),
+          4.8,
+          delta,
+        );
+
+    if (trayRef.current) {
+      trayRef.current.position.set(
+        0,
+        DEMO_RACK_LOCAL_Y.serviceTray,
+        0.02 + rackProgress.tray * 1.16,
       );
-      mouseGroup.current.rotation.set(value * -0.14, -0.08 + value * -0.14, value * 0.05);
-      mouseGroup.current.scale.setScalar(1 + value * 0.32);
     }
 
-    if (externalSsdGroup.current) {
-      const value = progress.externalSsd;
-      externalSsdGroup.current.position.set(
-        1.63 + value * 0.2,
-        0.025 + value * 0.18,
-        0.66 + value * 0.5,
+    if (nasRef.current) {
+      const release = MathUtils.smoothstep(rackProgress.nas, 0, 0.24);
+      const clear = MathUtils.smoothstep(rackProgress.nas, 0.24, 0.7);
+      const present = MathUtils.smoothstep(rackProgress.nas, 0.7, 1);
+      nasRef.current.position.set(
+        present * -1.62,
+        DEMO_RACK_LOCAL_Y.nas + release * 0.08 + present * 0.08,
+        0.26 + clear * 1.34 + present * 0.16,
       );
-      externalSsdGroup.current.rotation.set(value * -0.18, -0.12 + value * -0.2, value * 0.05);
-      externalSsdGroup.current.scale.setScalar(1 + value * 0.4);
+      nasRef.current.rotation.set(-present * 0.04, -present * 0.2, present * 0.03);
+      nasRef.current.scale.setScalar(1 + present * 0.24);
+    }
+
+    if (networkRef.current) {
+      const release = MathUtils.smoothstep(rackProgress.network, 0, 0.24);
+      const clear = MathUtils.smoothstep(rackProgress.network, 0.24, 0.7);
+      const present = MathUtils.smoothstep(rackProgress.network, 0.7, 1);
+      networkRef.current.position.set(
+        present * -1.64,
+        DEMO_RACK_LOCAL_Y.networkSwitch + release * 0.08 + present * 0.08,
+        0.28 + clear * 1.3 + present * 0.16,
+      );
+      networkRef.current.rotation.set(0, -present * 0.16, 0);
+      networkRef.current.scale.setScalar(1 + present * 0.32);
+    }
+
+    for (const component of COMPUTE_COMPONENTS) {
+      const target = Number(focus === component);
+      componentProgress.current[component] = reducedMotion
+        ? target
+        : MathUtils.damp(componentProgress.current[component], target, 5.2, delta);
+
+      const group = (componentRefs[component] as RefObject<Group | null> | undefined)?.current;
+      if (!group) continue;
+
+      const progress = componentProgress.current[component];
+      const base = COMPUTE_TRAY_COMPONENT_TRANSFORMS[component];
+      const release = MathUtils.smoothstep(progress, 0, 0.24);
+      const clear = MathUtils.smoothstep(progress, 0.24, 0.7);
+      const present = MathUtils.smoothstep(progress, 0.7, 1);
+      const forwardClear = component === "gpu" || component === "ram" ? 0.9 : 0.72;
+      const presentX = COMPUTE_PRESENT_LOCAL_X[component];
+      const presentRotation = COMPUTE_PRESENT_ROTATION[component];
+
+      group.position.set(
+        base.position[0] + present * (presentX - base.position[0]),
+        base.position[1] + release * 0.2 + present * 0.08,
+        base.position[2] + clear * forwardClear + present * 0.28,
+      );
+      group.rotation.set(
+        MathUtils.lerp(base.rotation[0], presentRotation[0], present),
+        MathUtils.lerp(base.rotation[1], presentRotation[1], present),
+        MathUtils.lerp(base.rotation[2], presentRotation[2], present),
+      );
+      group.scale.setScalar(
+        base.scale * (1 + present * (COMPUTE_PRESENT_SCALE[component] - 1)),
+      );
+    }
+
+    const fallbackSelectedEquipment: OperatorEquipmentId | null =
+      focus === "monitor"
+        ? "primary-monitor"
+        : focus === "keyboard" || focus === "mouse" || focus === "external-ssd"
+          ? focus
+          : null;
+    const selectedEquipment =
+      focus === "monitor" && selectedOperatorEquipment.current === "primary-monitor"
+        ? selectedOperatorEquipment.current
+        : fallbackSelectedEquipment;
+
+    for (const equipment of OPERATOR_EQUIPMENT) {
+      const target = Number(selectedEquipment === equipment);
+      equipmentProgress.current[equipment] = reducedMotion
+        ? target
+        : MathUtils.damp(equipmentProgress.current[equipment], target, 4.8, delta);
+
+      const group = (equipmentRefs[equipment] as RefObject<Group | null> | undefined)?.current;
+      if (!group) continue;
+
+      const progress = equipmentProgress.current[equipment];
+      const base = OPERATOR_EQUIPMENT_TRANSFORMS[equipment];
+      const release = MathUtils.smoothstep(progress, 0, 0.24);
+      const clear = MathUtils.smoothstep(progress, 0.24, 0.7);
+      const present = MathUtils.smoothstep(progress, 0.7, 1);
+      const staged = OPERATOR_PRESENT_TRANSFORMS[equipment];
+      const stagedRotation = OPERATOR_PRESENT_ROTATIONS[equipment];
+
+      group.position.set(
+        base.position[0] + present * (staged.x - base.position[0]),
+        base.position[1] + release * (staged.y - base.position[1]),
+        base.position[2] + clear * (staged.z - base.position[2]),
+      );
+      group.rotation.set(
+        MathUtils.lerp(base.rotation[0], stagedRotation[0], present),
+        MathUtils.lerp(base.rotation[1], stagedRotation[1], present),
+        MathUtils.lerp(base.rotation[2], stagedRotation[2], present),
+      );
+      group.scale.setScalar(base.scale + present * (staged.scale - base.scale));
     }
   });
 
   return (
     <group>
-      <Room />
-
-      <group ref={monitorGroup} onClick={() => inspect("monitor")}>
-        <MonitorModel position={[-0.42, 0.82, -0.42]} scale={1.1} rotation={[0, 0.035, 0]} />
-        <MonitorModel position={[0.86, 0.82, -0.42]} scale={1.1} rotation={[0, -0.035, 0]} variant={1} />
-      </group>
-
-      <group
-        ref={keyboardGroup}
-        position={[0.28, 0.025, 0.55]}
-        rotation={[0, -0.035, 0]}
-        onClick={() => inspect("keyboard")}
-      >
-        <KeyboardModel scale={1.18} />
-      </group>
-      <group
-        ref={mouseGroup}
-        position={[1.18, 0.055, 0.74]}
-        rotation={[0, -0.08, 0]}
-        onClick={() => inspect("mouse")}
-      >
-        <MouseModel scale={1.18} />
-      </group>
-      <group
-        ref={externalSsdGroup}
-        position={[1.63, 0.025, 0.66]}
-        rotation={[0, -0.12, 0]}
-        onClick={() => inspect("external-ssd")}
-      >
-        <ExternalSSDModel scale={1.08} />
-      </group>
-
-      <group
-        position={[2.14, 0.82, -0.14]}
-        scale={1.15}
-        onClick={showOverviewHotspots ? focusTower : undefined}
-      >
-        <TowerCaseModel panelOpen={towerOpen ? 1 : 0} reducedMotion={reducedMotion} />
-        <TowerInternalsModel
-          onSelect={inspect}
-          activeProduct={activeProduct}
-          ssdExtract={focus === "sata-ssd" ? 1 : 0}
-          reducedMotion={reducedMotion}
-        />
-      </group>
-
-      {showOverviewHotspots ? (
+      {inspectionLighting ? (
         <>
-          <Hotspot label="Monitors" position={[0.28, 1.62, -0.12]} onSelect={() => inspect("monitor")} />
-          <Hotspot label="Tower" position={[2.83, 1.74, 0.04]} onSelect={focusTower} />
-          <Hotspot label="Keyboard" position={[0.18, 0.36, 0.56]} onSelect={() => inspect("keyboard")} />
-          <Hotspot label="Mouse" position={[1.15, 0.22, 1.3]} onSelect={() => inspect("mouse")} />
-          <Hotspot label="External SSD" position={[1.91, 0.34, 0.8]} onSelect={() => inspect("external-ssd")} />
+          <pointLight
+            color="#f1f9fd"
+            decay={2}
+            distance={5.4}
+            intensity={inspectionLighting.keyIntensity}
+            position={inspectionLighting.key}
+          />
+          <pointLight
+            color="#5fd5ff"
+            decay={2}
+            distance={4.6}
+            intensity={inspectionLighting.fillIntensity}
+            position={inspectionLighting.fill}
+          />
+          <pointLight
+            color="#b9edff"
+            decay={2}
+            distance={4}
+            intensity={13}
+            position={inspectionLighting.rim}
+          />
         </>
       ) : null}
 
-      <RoundedBox args={[1.6, 0.018, 0.76]} radius={0.035} smoothness={3} position={[0.4, 0.008, 0.58]} receiveShadow>
-        <meshStandardMaterial color="#111419" roughness={0.62} />
-      </RoundedBox>
-      <ContactShadows position={[0.72, 0.005, 0.12]} scale={5.7} opacity={0.5} blur={2.2} far={3.4} />
+      <DataCenterEnvironment
+        ambientRacks={HERO_AMBIENT_RACKS}
+        showAmbientRacks={!mobile && (focus === "overview" || focus === "rack")}
+        labLabel="NEXT SOLUTIONS"
+        scale={ENVIRONMENT_SCALE}
+      />
+
+      <group
+        ref={rackRootRef}
+        position={RACK_POSITION}
+        rotation={[0, -0.055, 0]}
+        scale={RACK_SCALE}
+      >
+        <DemoRackFrame
+          doorOpen={PARKED_RACK_DOOR_OPEN}
+          label="NEXT SOLUTIONS // RACK 01"
+          showCables={focus !== "network-switch"}
+          onSelect={handleRackSelect}
+        >
+          <RackServerUnit
+            position={[0, DEMO_RACK_LOCAL_Y.topServer, 0.12]}
+            unitHeight={0.27}
+            label="2U COMPUTE NODE"
+            interactive={false}
+          />
+          <NetworkSwitchModel
+            ref={networkRef}
+            position={[0, DEMO_RACK_LOCAL_Y.networkSwitch, 0.28]}
+            portCount={24}
+            label="NS-24 MANAGED"
+            onSelect={handleProductSelect("network-switch")}
+          />
+          <mesh position={[0, DEMO_RACK_LOCAL_Y.nas - 0.3, 0.03]} castShadow>
+            <boxGeometry args={[1.12, 0.055, 1.08]} />
+            <meshStandardMaterial
+              color="#222a30"
+              metalness={0.72}
+              roughness={0.36}
+            />
+          </mesh>
+          <ComputeServiceTray
+            ref={trayRef}
+            position={[0, DEMO_RACK_LOCAL_Y.serviceTray, 0.02]}
+            componentRefs={componentRefs}
+            selectedComponent={activeComponent}
+            interactive={focus === "rack"}
+            onSelect={handleRackSelect}
+            onComponentSelect={(component, event) => {
+              event.stopPropagation();
+              inspectProduct(component);
+            }}
+          />
+          <NasApplianceModel
+            ref={nasRef}
+            position={[0, DEMO_RACK_LOCAL_Y.nas, 0.26]}
+            label="4-BAY NETWORK STORAGE"
+            onSelect={handleProductSelect("nas")}
+          />
+          <RackStorageArrayModel
+            position={[0, DEMO_RACK_LOCAL_Y.storageArray, 0.17]}
+            label="12-BAY STORAGE ARRAY"
+            interactive={false}
+          />
+          <UpsModel
+            position={[0, DEMO_RACK_LOCAL_Y.ups, 0.18]}
+            label="RACK UPS // 3KVA"
+            interactive={false}
+          />
+        </DemoRackFrame>
+
+        {showOverviewHotspots ? (
+          <>
+            <Hotspot
+              label="Network"
+              position={[0.06, 0.79, 0.9]}
+              onSelect={() => inspectProduct("network-switch")}
+            />
+            <Hotspot
+              label="NAS"
+              position={[0, 0.39, 0.92]}
+              side="left"
+              onSelect={() => inspectProduct("nas")}
+            />
+            <Hotspot
+              label="Components"
+              position={[0.04, -0.03, 0.96]}
+              onSelect={focusRack}
+            />
+          </>
+        ) : null}
+      </group>
+
+      <OperatorWorkstation
+        ref={workstationRootRef}
+        position={WORKSTATION_POSITION}
+        scale={WORKSTATION_SCALE}
+        equipmentRefs={equipmentRefs}
+        interactive={focus === "workstation"}
+        onSelect={handleWorkstationSelect}
+        onEquipmentSelect={(equipment, event) => {
+          event.stopPropagation();
+          selectedOperatorEquipment.current = equipment;
+          inspectProduct(EQUIPMENT_TO_PRODUCT[equipment]);
+        }}
+      />
+
+      {showOverviewHotspots ? (
+        <>
+          <Hotspot
+            label="Setup"
+            position={[4.7, 0.96, 0.5]}
+            side="left"
+            onSelect={focusWorkstation}
+          />
+        </>
+      ) : null}
+
+      <ContactShadows
+        position={[1.8, 0.02, 0.02]}
+        scale={9.6}
+        opacity={0.44}
+        blur={2.8}
+        far={5}
+      />
     </group>
   );
 }
@@ -239,29 +591,47 @@ export default function GamingCanvas() {
   return (
     <Canvas
       className={styles.canvas}
-      camera={{ position: [4.2, 2.2, 5.1], fov: 43, near: 0.1, far: 40 }}
-      dpr={[1, 1.6]}
+      camera={{ position: [5, 2.88, 6.2], fov: 37, near: 0.1, far: 40 }}
+      dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       shadows="basic"
     >
       <color attach="background" args={["#020304"]} />
-      <fog attach="fog" args={["#020304", 6.5, 13]} />
-      <ambientLight intensity={0.85} />
-      <hemisphereLight color="#c7e8f4" groundColor="#151116" intensity={1.05} />
+      <fog attach="fog" args={["#020304", 8.4, 16.2]} />
+      <ambientLight intensity={0.62} />
+      <hemisphereLight color="#d6f2ff" groundColor="#050709" intensity={0.8} />
       <spotLight
-        position={[1.6, 4.2, 3.2]}
-        color="#eaf8ff"
-        intensity={52}
-        angle={0.5}
-        penumbra={0.75}
+        position={[2.8, 5.4, 3.4]}
+        color="#f5fbff"
+        intensity={110}
+        angle={0.52}
+        penumbra={0.72}
         castShadow
       />
-      <spotLight position={[-2.5, 2.5, 2.8]} color="#8fcce9" intensity={20} angle={0.55} penumbra={0.9} />
-      <pointLight position={[2.8, 1.45, 1.25]} color="#c5eaff" intensity={7} distance={4.5} />
-      <pointLight position={[0.3, 1.25, 2.2]} color="#d7eff8" intensity={8} distance={4.2} />
-      <pointLight position={[2.25, 1, 0.9]} color="#a8dcf3" intensity={10} distance={3} />
+      <spotLight
+        position={[-1.8, 3.2, 2]}
+        color="#76dfff"
+        intensity={38}
+        angle={0.62}
+        penumbra={0.9}
+      />
+      <pointLight position={[2.1, 2.2, 1.8]} color="#72d8ff" intensity={10} distance={4.8} />
+      <pointLight
+        position={[4.72, 2.55, 2.36]}
+        color="#e7f7ff"
+        intensity={22}
+        distance={4.8}
+        decay={2}
+      />
+      <pointLight
+        position={[4.48, 0.82, 1.12]}
+        color="#35d8ff"
+        intensity={18}
+        distance={3.6}
+        decay={2}
+      />
       <Suspense fallback={null}>
-        <Setup />
+        <DataCenterSetup />
       </Suspense>
       <OrbitControls
         ref={controlsRef}
@@ -269,13 +639,13 @@ export default function GamingCanvas() {
         enableDamping
         dampingFactor={0.075}
         enablePan={false}
-        minDistance={4}
-        maxDistance={9.2}
-        minAzimuthAngle={-0.18}
-        maxAzimuthAngle={0.34}
+        minDistance={5}
+        maxDistance={10.8}
+        minAzimuthAngle={-0.16}
+        maxAzimuthAngle={0.28}
         minPolarAngle={1.02}
-        maxPolarAngle={1.42}
-        target={[0.35, 0.58, -0.02]}
+        maxPolarAngle={1.4}
+        target={[1.55, 1.48, -0.08]}
       />
       <CameraRig controlsRef={controlsRef} />
     </Canvas>

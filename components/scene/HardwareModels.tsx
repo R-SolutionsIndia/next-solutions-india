@@ -3,7 +3,7 @@
 import { RoundedBox } from "@react-three/drei";
 import { useFrame, type ThreeElements } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { CanvasTexture, MathUtils, SRGBColorSpace, type Group } from "three";
+import { CanvasTexture, LinearFilter, MathUtils, Shape, SRGBColorSpace, type Group } from "three";
 import type { ProductTarget } from "@/lib/scene-store";
 
 type GroupProps = ThreeElements["group"];
@@ -120,39 +120,206 @@ function GpuFan({ position }: { position: [number, number, number] }) {
   );
 }
 
-export function MonitorModel({ variant = 0, ...props }: GroupProps & { variant?: number }) {
+export function MonitorModel({
+  variant = 0,
+  wide = false,
+  ...props
+}: GroupProps & { variant?: number; wide?: boolean }) {
   const accent = variant === 0 ? "#75d7ff" : "#bb86ff";
+  const width = wide ? 1.68 : 1.16;
+  const height = wide ? 0.82 : 0.68;
+  const screenWidth = width - 0.08;
+  const screenHeight = height - 0.08;
+  const dashboardTexture = useMemo(() => {
+    if (typeof document === "undefined") return null;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 1536;
+    canvas.height = 768;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+
+    context.fillStyle = "#050b10";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = "rgba(102, 184, 220, 0.10)";
+    context.lineWidth = 1;
+    for (let x = 0; x <= canvas.width; x += 64) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, canvas.height);
+      context.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += 64) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(canvas.width, y);
+      context.stroke();
+    }
+
+    context.fillStyle = "#08141c";
+    context.fillRect(0, 0, 238, canvas.height);
+    context.fillStyle = accent;
+    context.fillRect(0, 0, 7, canvas.height);
+    context.fillStyle = "#ecf8fc";
+    context.font = "700 34px Arial, sans-serif";
+    context.fillText("NEXT // OPS", 38, 62);
+    context.fillStyle = "#78d9ff";
+    context.font = "600 18px Arial, sans-serif";
+    context.fillText("INFRASTRUCTURE CONTROL", 38, 92);
+
+    const navItems = ["OVERVIEW", "COMPUTE", "NETWORK", "STORAGE", "POWER"];
+    navItems.forEach((item, index) => {
+      const y = 154 + index * 72;
+      if (index === 0) {
+        context.fillStyle = "rgba(117, 215, 255, 0.14)";
+        context.fillRect(22, y - 30, 194, 48);
+      }
+      context.fillStyle = index === 0 ? "#ecf8fc" : "#718b98";
+      context.font = "600 20px Arial, sans-serif";
+      context.fillText(item, 42, y);
+      context.fillStyle = index < 4 ? "#75d7ff" : "#42535d";
+      context.beginPath();
+      context.arc(190, y - 7, 5, 0, Math.PI * 2);
+      context.fill();
+    });
+
+    context.fillStyle = "#e9f7fc";
+    context.font = "700 30px Arial, sans-serif";
+    context.fillText("LIVE SYSTEM STATUS", 286, 66);
+    context.fillStyle = "#77d9ff";
+    context.font = "600 18px Arial, sans-serif";
+    context.fillText("ALL SERVICES NOMINAL", 1184, 62);
+
+    const metrics = [
+      ["COMPUTE LOAD", "42%", 0.42],
+      ["STORAGE POOL", "68%", 0.68],
+      ["NETWORK", "8.4 GB/s", 0.56],
+    ] as const;
+    metrics.forEach(([label, value, amount], index) => {
+      const x = 286 + index * 286;
+      context.fillStyle = "#0a1720";
+      context.fillRect(x, 106, 250, 138);
+      context.strokeStyle = "#1e3c4a";
+      context.strokeRect(x, 106, 250, 138);
+      context.fillStyle = "#718b98";
+      context.font = "600 17px Arial, sans-serif";
+      context.fillText(label, x + 20, 142);
+      context.fillStyle = "#effaff";
+      context.font = "700 36px Arial, sans-serif";
+      context.fillText(value, x + 20, 190);
+      context.fillStyle = "#102b38";
+      context.fillRect(x + 20, 211, 210, 8);
+      context.fillStyle = accent;
+      context.fillRect(x + 20, 211, 210 * amount, 8);
+    });
+
+    context.fillStyle = "#0a141b";
+    context.fillRect(286, 282, 755, 390);
+    context.strokeStyle = "#1d3946";
+    context.strokeRect(286, 282, 755, 390);
+    context.fillStyle = "#8ca4b0";
+    context.font = "600 18px Arial, sans-serif";
+    context.fillText("THROUGHPUT // LAST 60 MINUTES", 310, 321);
+    context.strokeStyle = "rgba(117, 215, 255, 0.18)";
+    for (let row = 0; row < 5; row += 1) {
+      const y = 368 + row * 58;
+      context.beginPath();
+      context.moveTo(310, y);
+      context.lineTo(1015, y);
+      context.stroke();
+    }
+    context.strokeStyle = accent;
+    context.lineWidth = 5;
+    context.beginPath();
+    for (let index = 0; index <= 24; index += 1) {
+      const x = 310 + index * 29;
+      const y = 535 - Math.sin(index * 0.72) * 58 - Math.cos(index * 0.27) * 28;
+      if (index === 0) context.moveTo(x, y);
+      else context.lineTo(x, y);
+    }
+    context.stroke();
+
+    context.fillStyle = "#08131a";
+    context.fillRect(1080, 106, 410, 566);
+    context.strokeStyle = "#1d3946";
+    context.strokeRect(1080, 106, 410, 566);
+    context.fillStyle = "#8ca4b0";
+    context.font = "600 18px Arial, sans-serif";
+    context.fillText("RACK 01 // FRONT", 1110, 145);
+    context.strokeStyle = "#526977";
+    context.lineWidth = 4;
+    context.strokeRect(1170, 178, 228, 430);
+    for (let unit = 0; unit < 8; unit += 1) {
+      const y = 198 + unit * 48;
+      context.fillStyle = unit === 3 ? "#102d3a" : "#111c23";
+      context.fillRect(1190, y, 188, 34);
+      context.fillStyle = unit < 6 ? "#75d7ff" : "#42535d";
+      context.beginPath();
+      context.arc(1355, y + 17, 5, 0, Math.PI * 2);
+      context.fill();
+      context.fillStyle = "#667d89";
+      for (let vent = 0; vent < 7; vent += 1) {
+        context.fillRect(1205 + vent * 17, y + 13, 9, 8);
+      }
+    }
+    context.fillStyle = "#6d8794";
+    context.font = "600 17px Arial, sans-serif";
+    context.fillText("POWER 42%", 1110, 638);
+    context.fillStyle = "#75d7ff";
+    context.fillText("UPTIME 99.99%", 1270, 638);
+
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace;
+    texture.minFilter = LinearFilter;
+    texture.magFilter = LinearFilter;
+    texture.anisotropy = 8;
+    return texture;
+  }, [accent]);
+
+  useEffect(() => () => dashboardTexture?.dispose(), [dashboardTexture]);
+
   return (
     <group {...props}>
-      <RoundedBox args={[1.16, 0.68, 0.055]} radius={0.026} smoothness={4} castShadow>
+      <RoundedBox args={[width, height, 0.065]} radius={0.028} smoothness={4} castShadow>
         <meshStandardMaterial color="#24292f" metalness={0.72} roughness={0.25} />
       </RoundedBox>
-      <mesh position={[0, 0, 0.031]}>
-        <planeGeometry args={[1.09, 0.61]} />
-        <meshStandardMaterial color="#071018" emissive="#0a2a3d" emissiveIntensity={0.75} roughness={0.18} />
+      <mesh position={[0, 0, 0.036]}>
+        <planeGeometry args={[screenWidth, screenHeight]} />
+        {dashboardTexture ? (
+          <meshBasicMaterial map={dashboardTexture} toneMapped={false} />
+        ) : (
+          <meshStandardMaterial
+            color="#071018"
+            emissive="#0a2a3d"
+            emissiveIntensity={0.72}
+            roughness={0.18}
+          />
+        )}
       </mesh>
-      <mesh position={[-0.36, 0.14, 0.036]}>
-        <planeGeometry args={[0.25, 0.22]} />
-        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.52} />
+      <mesh position={[0, 0, 0.039]}>
+        <planeGeometry args={[screenWidth, screenHeight]} />
+        <meshPhysicalMaterial
+          color="#d9f4ff"
+          metalness={0.08}
+          opacity={0.045}
+          roughness={0.12}
+          transparent
+        />
       </mesh>
-      {[0, 1, 2, 3].map((row) => (
-        <mesh key={row} position={[0.18, 0.21 - row * 0.095, 0.038]}>
-          <planeGeometry args={[0.52 - row * 0.05, 0.022]} />
-          <meshStandardMaterial color={row === 0 ? accent : "#45606c"} emissive={accent} emissiveIntensity={row === 0 ? 0.45 : 0.08} />
-        </mesh>
-      ))}
-      <mesh position={[0.02, -0.18, 0.038]}>
-        <planeGeometry args={[0.82, 0.12]} />
-        <meshStandardMaterial color="#101e27" emissive="#164052" emissiveIntensity={0.22} />
-      </mesh>
-      <mesh position={[0, -0.47, -0.015]} castShadow>
-        <boxGeometry args={[0.055, 0.28, 0.055]} />
+      <mesh position={[0, -height / 2 - 0.19, -0.015]} castShadow>
+        <boxGeometry args={[0.065, 0.34, 0.065]} />
         <meshStandardMaterial color="#555c63" metalness={0.88} roughness={0.18} />
       </mesh>
-      <RoundedBox args={[0.43, 0.03, 0.25]} radius={0.018} smoothness={3} position={[0, -0.62, 0.04]} castShadow>
+      <RoundedBox
+        args={[wide ? 0.52 : 0.43, 0.035, 0.28]}
+        radius={0.018}
+        smoothness={3}
+        position={[0, -height / 2 - 0.38, 0.04]}
+        castShadow
+      >
         <meshStandardMaterial color="#292f34" metalness={0.8} roughness={0.25} />
       </RoundedBox>
-      <pointLight position={[0, 0, 0.3]} color={accent} intensity={0.28} distance={1.7} />
+      <pointLight position={[0, 0, 0.3]} color={accent} intensity={0.08} distance={1.5} />
     </group>
   );
 }
@@ -187,35 +354,89 @@ export function KeyboardModel(props: GroupProps) {
           );
         }),
       )}
-      <mesh position={[0, 0.07, 0.19]}>
-        <boxGeometry args={[0.98, 0.008, 0.012]} />
-        <meshStandardMaterial color={cyan} emissive={cyan} emissiveIntensity={0.8} />
+      <mesh position={[0.46, 0.07, 0.19]}>
+        <boxGeometry args={[0.06, 0.008, 0.012]} />
+        <meshStandardMaterial color={cyan} emissive={cyan} emissiveIntensity={0.48} />
       </mesh>
     </group>
   );
 }
 
 export function MouseModel(props: GroupProps) {
+  const shellShape = useMemo(() => {
+    const shape = new Shape();
+    shape.moveTo(0, 0.17);
+    shape.bezierCurveTo(-0.068, 0.17, -0.098, 0.122, -0.104, 0.052);
+    shape.bezierCurveTo(-0.114, -0.04, -0.104, -0.132, 0, -0.17);
+    shape.bezierCurveTo(0.104, -0.132, 0.114, -0.04, 0.104, 0.052);
+    shape.bezierCurveTo(0.098, 0.122, 0.068, 0.17, 0, 0.17);
+    shape.closePath();
+    return shape;
+  }, []);
+
   return (
     <group {...props}>
-      <RoundedBox args={[0.2, 0.105, 0.3]} radius={0.085} smoothness={6} castShadow>
-        <meshStandardMaterial color="#2a3035" metalness={0.44} roughness={0.26} />
+      <mesh position={[0, 0.022, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow>
+        <extrudeGeometry
+          args={[
+            shellShape,
+            {
+              depth: 0.06,
+              bevelEnabled: true,
+              bevelSegments: 5,
+              bevelSize: 0.018,
+              bevelThickness: 0.018,
+              curveSegments: 28,
+              steps: 1,
+            },
+          ]}
+        />
+        <meshStandardMaterial color="#20282e" metalness={0.24} roughness={0.46} />
+      </mesh>
+
+      <mesh position={[0, 0.107, -0.09]} rotation={[-0.07, 0, 0]}>
+        <boxGeometry args={[0.006, 0.006, 0.135]} />
+        <meshStandardMaterial color="#070a0c" roughness={0.82} />
+      </mesh>
+
+      <mesh position={[0, 0.112, -0.052]} rotation={[0, 0, Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[0.015, 0.015, 0.027, 20]} />
+        <meshStandardMaterial color="#81919a" metalness={0.62} roughness={0.36} />
+      </mesh>
+
+      <RoundedBox
+        args={[0.018, 0.006, 0.032]}
+        radius={0.006}
+        smoothness={3}
+        position={[0, 0.106, 0.005]}
+      >
+        <meshStandardMaterial color="#5f7079" metalness={0.46} roughness={0.4} />
       </RoundedBox>
-      <mesh position={[-0.046, 0.058, -0.056]} rotation={[-0.1, 0, 0]}>
-        <boxGeometry args={[0.073, 0.012, 0.13]} />
-        <meshStandardMaterial color="#454d54" metalness={0.42} roughness={0.28} />
-      </mesh>
-      <mesh position={[0.046, 0.058, -0.056]} rotation={[-0.1, 0, 0]}>
-        <boxGeometry args={[0.073, 0.012, 0.13]} />
-        <meshStandardMaterial color="#454d54" metalness={0.42} roughness={0.28} />
-      </mesh>
-      <mesh position={[0, 0.071, -0.035]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.016, 0.016, 0.026, 16]} />
-        <meshStandardMaterial color="#a8b5bd" metalness={0.8} roughness={0.24} />
-      </mesh>
-      <mesh position={[0, 0.025, 0.145]}>
-        <boxGeometry args={[0.008, 0.012, 0.12]} />
-        <meshStandardMaterial color={cyan} emissive={cyan} emissiveIntensity={0.9} />
+
+      {[-1, 1].map((side) => (
+        <RoundedBox
+          key={`mouse-grip-${side}`}
+          args={[0.008, 0.026, 0.12]}
+          radius={0.006}
+          smoothness={3}
+          position={[side * 0.108, 0.052, 0.024]}
+        >
+          <meshStandardMaterial color="#080c0f" roughness={0.78} />
+        </RoundedBox>
+      ))}
+
+      <RoundedBox
+        args={[0.074, 0.006, 0.012]}
+        radius={0.004}
+        smoothness={3}
+        position={[0, 0.037, 0.168]}
+      >
+        <meshStandardMaterial color={cyan} emissive={cyan} emissiveIntensity={0.52} />
+      </RoundedBox>
+
+      <mesh position={[0, 0.105, 0.065]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.013, 0.019, 24]} />
+        <meshStandardMaterial color={cyan} emissive={cyan} emissiveIntensity={0.38} />
       </mesh>
     </group>
   );
@@ -225,16 +446,19 @@ export function ExternalSSDModel(props: GroupProps) {
   return (
     <group {...props}>
       <RoundedBox args={[0.32, 0.07, 0.24]} radius={0.03} smoothness={5} castShadow>
-        <meshStandardMaterial color="#59626a" metalness={0.76} roughness={0.22} />
+        <meshStandardMaterial color="#22282d" metalness={0.42} roughness={0.5} />
       </RoundedBox>
-      <mesh position={[0, 0.037, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.22, 0.12]} />
-        <meshStandardMaterial color="#dce3e7" metalness={0.18} roughness={0.46} />
-      </mesh>
-      <mesh position={[0, 0.039, 0.022]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[0.13, 0.012]} />
-        <meshStandardMaterial color="#34454f" />
-      </mesh>
+      {[-0.095, -0.055, -0.015, 0.025, 0.065, 0.105].map((z) => (
+        <RoundedBox
+          key={z}
+          args={[0.255, 0.012, 0.018]}
+          radius={0.006}
+          smoothness={2}
+          position={[0, 0.039, z]}
+        >
+          <meshStandardMaterial color="#3d464d" metalness={0.35} roughness={0.42} />
+        </RoundedBox>
+      ))}
       <mesh position={[0.163, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[0.09, 0.022]} />
         <meshStandardMaterial color="#050505" />
@@ -244,12 +468,12 @@ export function ExternalSSDModel(props: GroupProps) {
         <meshStandardMaterial color={cyan} emissive={cyan} emissiveIntensity={1.2} />
       </mesh>
       <ProductLabel
-        brand="SAMSUNG"
-        model="PORTABLE SSD"
-        detail="USB-C · 1 TB"
-        position={[0, 0.041, 0]}
+        brand="SAMSUNG T7"
+        model="SHIELD SSD"
+        detail="1 TB · USB 3.2"
+        position={[0, 0.047, -0.004]}
         rotation={[-Math.PI / 2, 0, 0]}
-        size={[0.23, 0.1]}
+        size={[0.19, 0.085]}
       />
     </group>
   );
@@ -307,11 +531,11 @@ export function RamModel(props: GroupProps) {
         <group key={z} position={[0, 0, z]}>
           <mesh castShadow>
             <boxGeometry args={[0.028, 0.31, 0.1]} />
-            <meshStandardMaterial color="#4b555e" metalness={0.72} roughness={0.25} />
+            <meshStandardMaterial color="#225548" metalness={0.25} roughness={0.48} />
           </mesh>
           <mesh position={[0.015, 0.125, 0]} rotation={[0, Math.PI / 2, 0]}>
             <boxGeometry args={[0.06, 0.035, 0.008]} />
-            <meshStandardMaterial color={cyan} emissive={cyan} emissiveIntensity={0.72} />
+              <meshStandardMaterial color="#182025" roughness={0.42} />
           </mesh>
           {[-0.1, -0.035, 0.035, 0.1].map((y) => (
             <mesh key={y} position={[-0.016, y, 0]} rotation={[0, Math.PI / 2, 0]}>
@@ -321,8 +545,8 @@ export function RamModel(props: GroupProps) {
           ))}
           <ProductLabel
             brand="CRUCIAL"
-            model="DDR5"
-            detail="16 GB · 5600"
+            model="DDR4 UDIMM"
+            detail="16 GB · 2666"
             position={[0.015, 0, 0]}
             rotation={[0, Math.PI / 2, 0]}
             size={[0.078, 0.22]}
@@ -354,11 +578,11 @@ export function GpuModel(props: GroupProps) {
       </mesh>
       <ProductLabel
         brand="ZOTAC GAMING"
-        model="GEFORCE RTX"
-        detail="12 GB · PCIe 4.0"
+        model="RTX 4070 SUPER"
+        detail="12 GB · GDDR6X"
         position={[0, 0.105, 0.092]}
         size={[0.27, 0.085]}
-        accent="#a98bff"
+        accent="#70d7ff"
       />
     </group>
   );
@@ -403,7 +627,7 @@ export function HddModel(props: GroupProps) {
       </mesh>
       <ProductLabel
         brand="WD BLUE"
-        model="HARD DRIVE"
+        model="DESKTOP HDD"
         detail="2 TB · SATA"
         position={[0, 0.036, 0.16]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -445,8 +669,8 @@ export function SataSSDModel(props: GroupProps) {
         </mesh>
       ))}
       <ProductLabel
-        brand="SAMSUNG"
-        model="SATA SSD"
+        brand="WD BLUE"
+        model="SA510 SATA"
         detail="1 TB · 2.5 INCH"
         position={[0, 0.029, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -479,7 +703,7 @@ export function NvmeSSDModel(props: GroupProps) {
       </mesh>
       <ProductLabel
         brand="WD_BLACK"
-        model="NVMe SSD"
+        model="SN770 NVMe"
         detail="1 TB · PCIe 4.0"
         position={[0, 0.012, 0.017]}
         size={[0.065, 0.2]}

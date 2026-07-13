@@ -41,8 +41,8 @@ export default function HomePage() {
           <div className={styles.sectionIntro}>
             <h2 id="process-heading">A clearer path to the right hardware.</h2>
             <p>
-              The 3D setup helps you understand where hardware belongs. The catalogue helps you
-              choose the exact model.
+              The interactive infrastructure lab shows how storage, compute and networking fit
+              together. The catalogue helps you choose the exact model.
             </p>
           </div>
           <ol className={styles.steps}>
