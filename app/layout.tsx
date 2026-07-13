@@ -32,6 +32,11 @@ export const metadata: Metadata = {
   },
   description:
     "Explore computer hardware, compare verified specifications and request the right configuration from Next Solutions.",
+  icons: {
+    icon: "/brand/next-solutions-logo.jpeg",
+    shortcut: "/brand/next-solutions-logo.jpeg",
+    apple: "/brand/next-solutions-logo.jpeg",
+  },
   openGraph: {
     title: "Next Solutions — Built for What's Next",
     description:
