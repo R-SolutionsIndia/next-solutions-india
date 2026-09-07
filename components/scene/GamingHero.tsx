@@ -378,9 +378,6 @@ export default function GamingHero({ className = "" }: { className?: string }) {
         <span>Drag to rotate</span>
       </div>
 
-      {focus === "overview" ? (
-        <p className={styles.representative}>Representative hardware</p>
-      ) : null}
       {drawerProduct ? <ProductDrawer productId={drawerProduct} /> : null}
       <p className={styles.srOnly} aria-live="polite">
         {drawerProduct ? `${SCENE_PRODUCTS[drawerProduct].name} details opened.` : ""}

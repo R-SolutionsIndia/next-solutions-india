@@ -25,7 +25,6 @@
 .sceneOptions svg { opacity: 0; transition: opacity 180ms, transform 180ms; }
 .sceneOptions button:hover { color: #fff; }
 .sceneOptions button:hover svg, .sceneOptions button:focus-visible svg { opacity: 1; transform: translateX(3px); }
-.representative { position: absolute; bottom: 114px; left: 4vw; color: #87948b; font: 9px var(--font-mono), monospace; letter-spacing: .07em; }
 .dragHint { position: absolute; right: 4vw; bottom: 113px; display: flex; gap: 10px; align-items: center; color: #98a49c; font: 10px var(--font-mono), monospace; pointer-events: none; }
 .loading, .fallback { position: absolute; inset: 0; background: #101214; }
 .loading::before { position: absolute; top: 50%; left: 70%; width: 28px; height: 28px; border: 1px solid #474f49; border-top-color: #d7e4d8; border-radius: 50%; content: ''; animation: spin 900ms linear infinite; }
@@ -78,7 +77,6 @@
   .sceneOptions { width: 100%; }
   .sceneOptions button { padding: 4px 14px; font-size: 12px; grid-template-columns: 1fr; gap: 9px; }
   .sceneOptions svg { display: none; }
-  .representative { bottom: 104px; left: 24px; font-size: 8px; }
   .dragHint { display: none; }
   .backControl { top: 22px; left: 24px; }
   .componentSelectorCard { top: auto; left: 20px; right: 20px; bottom: 22px; width: auto; }
