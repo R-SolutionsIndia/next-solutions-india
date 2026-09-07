@@ -2,7 +2,8 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { ArrowLeft, ArrowRight, MoveHorizontal, X } from "lucide-react";
+import { Component, useEffect, useRef, useState, type ReactNode, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import { useSceneStore, type ProductTarget } from "@/lib/scene-store";
 
@@ -22,6 +23,18 @@ function supportsWebGL() {
     );
   } catch {
     return false;
+  }
+}
+
+class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? <StaticFallback /> : this.props.children;
   }
 }
 
@@ -144,7 +157,7 @@ function ProductDrawer({ productId }: { productId: ProductTarget }) {
         type="button"
         aria-label="Close product details"
       >
-        ×
+        <X size={20} aria-hidden="true" />
       </button>
       <p className={styles.drawerCategory}>{product.category}</p>
       <h2 className={styles.drawerTitle}>{product.name}</h2>
@@ -237,6 +250,8 @@ function HardwareSelectorCard({
 
 export default function GamingHero({ className = "" }: { className?: string }) {
   const [webGLAvailable, setWebGLAvailable] = useState<boolean | null>(null);
+  const [sceneVisible, setSceneVisible] = useState(true);
+  const heroRef = useRef<HTMLElement>(null);
   const drawerProduct = useSceneStore((state) => state.drawerProduct);
   const focus = useSceneStore((state) => state.focus);
   const hasEntered = useSceneStore((state) => state.hasEntered);
@@ -246,6 +261,27 @@ export default function GamingHero({ className = "" }: { className?: string }) {
   const resetScene = useSceneStore((state) => state.resetScene);
   const inspectProduct = useSceneStore((state) => state.inspectProduct);
   const setReducedMotion = useSceneStore((state) => state.setReducedMotion);
+
+  useEffect(() => {
+    if (focus !== "overview") {
+      heroRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+  }, [focus]);
+
+  useEffect(() => {
+    let inViewport = true;
+    const syncVisibility = () => setSceneVisible(inViewport && !document.hidden);
+    const observer = new IntersectionObserver(([entry]) => {
+      inViewport = entry.isIntersecting;
+      syncVisibility();
+    });
+    if (heroRef.current) observer.observe(heroRef.current);
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -263,37 +299,42 @@ export default function GamingHero({ className = "" }: { className?: string }) {
 
   return (
     <section
+      ref={heroRef}
       className={`${styles.hero} ${className}`}
       data-focus={focus}
       data-drawer-open={drawerProduct !== null ? "true" : "false"}
       aria-labelledby="infrastructure-hero-title"
     >
       <div className={styles.canvasShell} inert={drawerProduct ? true : undefined}>
-        {webGLAvailable === false ? <StaticFallback /> : <GamingCanvas />}
+        {webGLAvailable === false ? <StaticFallback /> : (
+          <SceneBoundary>
+            <GamingCanvas active={sceneVisible} onUnavailable={() => setWebGLAvailable(false)} />
+          </SceneBoundary>
+        )}
       </div>
 
       <div className={styles.copy} inert={focus !== "overview" ? true : undefined}>
         <h1 className={styles.title} id="infrastructure-hero-title">
           Built for
           <br />
-          What&apos;s Next.
+          what’s next.
         </h1>
         <p className={styles.lede}>
-          Explore the infrastructure. Inspect the hardware. Find the right configuration.
+          Storage, compute and connectivity. Find the right hardware for your next build.
         </p>
         <div className={styles.actions}>
           <button className={styles.primaryAction} onClick={enterScene} type="button">
             Explore infrastructure
           </button>
           <Link className={styles.secondaryAction} href="/products">
-            Browse products
+            Browse products <ArrowRight size={20} aria-hidden="true" />
           </Link>
         </div>
       </div>
 
       {focus !== "overview" && drawerProduct === null ? (
         <button className={styles.backControl} onClick={resetScene} type="button">
-          <span aria-hidden="true">←</span>{" "}
+          <ArrowLeft size={18} aria-hidden="true" />
           {focus === "workstation" ? "Return to overview" : "Return to setup"}
         </button>
       ) : null}
@@ -317,11 +358,14 @@ export default function GamingHero({ className = "" }: { className?: string }) {
       ) : null}
 
       {focus === "overview" ? (
-        <div className={styles.mobileSceneMenu} aria-label="Explore infrastructure hardware">
-          <button type="button" onClick={focusRack}>Components</button>
-          <button type="button" onClick={() => inspectProduct("nas")}>NAS</button>
-          <button type="button" onClick={() => inspectProduct("network-switch")}>Network</button>
-          <button type="button" onClick={focusWorkstation}>Setup</button>
+        <div className={styles.sceneNavigation}>
+          <p>Hardware, considered.</p>
+          <nav className={styles.sceneOptions} aria-label="Explore infrastructure hardware">
+            <button type="button" onClick={focusRack}><span>01</span>Components<ArrowRight size={16} aria-hidden="true" /></button>
+            <button type="button" onClick={() => inspectProduct("network-switch")}><span>02</span>Network<ArrowRight size={16} aria-hidden="true" /></button>
+            <button type="button" onClick={() => inspectProduct("nas")}><span>03</span>Storage<ArrowRight size={16} aria-hidden="true" /></button>
+            <button type="button" onClick={focusWorkstation}><span>04</span>Workstation<ArrowRight size={16} aria-hidden="true" /></button>
+          </nav>
         </div>
       ) : null}
 
@@ -330,12 +374,12 @@ export default function GamingHero({ className = "" }: { className?: string }) {
         style={{ opacity: hasEntered || focus !== "overview" ? 0 : 1 }}
         aria-hidden="true"
       >
-        <span className={styles.dragGlyph}>← ◉ →</span>
-        <span>Drag to inspect infrastructure</span>
+        <MoveHorizontal size={18} aria-hidden="true" />
+        <span>Drag to rotate</span>
       </div>
 
       {focus === "overview" ? (
-        <p className={styles.representative}>Representative infrastructure lab</p>
+        <p className={styles.representative}>Representative hardware</p>
       ) : null}
       {drawerProduct ? <ProductDrawer productId={drawerProduct} /> : null}
       <p className={styles.srOnly} aria-live="polite">

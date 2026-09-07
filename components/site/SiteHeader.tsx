@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./site.module.css";
 
 const navigation = [
@@ -17,11 +17,25 @@ const navigation = [
 export default function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      menuButton.current?.focus();
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [open]);
 
   return (
     <header className={`${styles.header} ${styles.dark}`}>
       <div className={styles.headerInner}>
-        <Link href="/" className={styles.logoLink} aria-label="Next Solutions home">
+        <Link href="/" className={styles.logoLink} aria-label="Next Solutions home" onClick={() => setOpen(false)}>
           <span className={styles.logoMark} aria-hidden="true">
             <Image
               src="/brand/next-solutions-logo.jpeg"
@@ -44,6 +58,7 @@ export default function SiteHeader() {
               href={item.href}
               key={item.href}
               className={pathname.startsWith(item.href) ? styles.active : undefined}
+              aria-current={pathname.startsWith(item.href) ? "page" : undefined}
             >
               {item.label}
             </Link>
@@ -52,10 +67,12 @@ export default function SiteHeader() {
 
         <Link className={styles.requestLink} href="/products">
           Request Price
+          <ArrowUpRight size={16} strokeWidth={1.6} aria-hidden="true" />
         </Link>
 
         <button
           className={styles.menuButton}
+          ref={menuButton}
           type="button"
           aria-expanded={open}
           aria-controls="mobile-menu"
@@ -69,12 +86,19 @@ export default function SiteHeader() {
       {open ? (
         <nav id="mobile-menu" className={styles.mobileNav} aria-label="Mobile navigation">
           {navigation.map((item) => (
-            <Link href={item.href} key={item.href} onClick={() => setOpen(false)}>
+            <Link
+              href={item.href}
+              key={item.href}
+              className={pathname.startsWith(item.href) ? styles.active : undefined}
+              aria-current={pathname.startsWith(item.href) ? "page" : undefined}
+              onClick={() => setOpen(false)}
+            >
               {item.label}
             </Link>
           ))}
-          <Link href="/products" onClick={() => setOpen(false)}>
+          <Link className={styles.mobileRequest} href="/products" onClick={() => setOpen(false)}>
             Request Price
+            <ArrowUpRight size={16} strokeWidth={1.6} aria-hidden="true" />
           </Link>
         </nav>
       ) : null}

@@ -1,6 +1,6 @@
 # Next Solutions V1
 
-A monochrome, gaming-first 3D product explorer and request-price catalog for Next Solutions.
+A studio-style 3D hardware explorer and request-price catalogue for Next Solutions, with graphite surfaces, sage accents, and a consistent responsive design across the site.
 
 ## Development
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Product flow
 
-1. Explore the representative gaming setup.
+1. Explore the representative infrastructure rack and workstation.
 2. Inspect a product or internal component.
 3. Continue into the filtered product catalog.
 4. Choose an exact SKU and quantity.
@@ -23,7 +23,9 @@ The 3D scene is an enhancement. Catalog routes and enquiry controls remain usabl
 
 ## 3D asset strategy
 
-V1 uses proportioned procedural geometry for the representative gaming desk and its internal components. Three.js / React Three Fiber is the real-time renderer; it is not the source of product accuracy.
+The scene uses procedural geometry for the rack, workstation, NAS, networking equipment, and internal components. Details include port contacts, circuit boards, fasteners, drive bays, fan blades, and labelled keycaps. Studio lighting and physically based materials provide a consistent finish. These are representative models, not exact branded replicas.
+
+`HardwareModels.tsx` and `DataCenterModels.tsx` own model geometry; `HardwareDetails.tsx` contains shared instanced details and textures. `GamingCanvas.tsx` owns lighting and scene assembly, while `CameraRig.tsx` handles responsive framing. Rendering pauses when the hero is offscreen or the tab is hidden. A captured studio poster provides a fallback if WebGL is unavailable.
 
 For exact branded products, replace the representative component with an approved CAD or Blender model exported as an optimized `.glb`:
 

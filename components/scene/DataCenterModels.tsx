@@ -17,6 +17,7 @@ import {
   DoubleSide,
   LinearFilter,
   Matrix4,
+  RepeatWrapping,
   SRGBColorSpace,
   Vector3,
   type Group,
@@ -37,13 +38,15 @@ import {
 } from "./HardwareModels";
 
 export const DATA_CENTER_PALETTE = {
-  black: "#050709",
-  ink: "#0a0d10",
-  graphite: "#1b2025",
-  graphiteLight: "#303840",
-  coolWhite: "#eef8fc",
-  mutedWhite: "#9fb0b9",
-  cyan: "#72d8ff",
+  black: "#080909",
+  ink: "#151717",
+  graphite: "#292c2c",
+  graphiteLight: "#484d4c",
+  coolWhite: "#e1e3de",
+  mutedWhite: "#9bA39f",
+  cyan: "#aecbc0",
+  aluminum: "#a3aaa6",
+  statusGreen: "#9dca72",
 } as const;
 
 export type SceneVector3 = [number, number, number];
@@ -134,25 +137,17 @@ function EquipmentLabel({
     const context = canvas.getContext("2d");
     if (!context) return null;
 
-    context.fillStyle = DATA_CENTER_PALETTE.ink;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = DATA_CENTER_PALETTE.cyan;
-    context.fillRect(0, 0, 20, canvas.height);
-    context.strokeStyle = DATA_CENTER_PALETTE.graphiteLight;
-    context.lineWidth = 4;
-    context.strokeRect(32, 22, 970, 212);
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
-    const titleSize = fitText(context, title, 850, 86, 48);
+    const titleSize = fitText(context, title, 900, 76, 44);
     context.font = `700 ${titleSize}px Arial, sans-serif`;
     context.fillStyle = DATA_CENTER_PALETTE.coolWhite;
     context.textAlign = align;
     const x = align === "center" ? canvas.width / 2 : 74;
-    context.fillText(title, x, 118);
+    context.fillText(title, x, 148);
 
-    context.font = "600 38px Arial, sans-serif";
-    context.fillStyle = DATA_CENTER_PALETTE.mutedWhite;
-    context.letterSpacing = "3px";
-    context.fillText(subtitle, x, 186);
+    // Equipment uses restrained silk-screened model text, without a brand plaque.
+    void subtitle;
 
     const nextTexture = new CanvasTexture(canvas);
     nextTexture.colorSpace = SRGBColorSpace;
@@ -168,12 +163,14 @@ function EquipmentLabel({
 
   return (
     <mesh position={position} rotation={rotation}>
-      <planeGeometry args={size} />
-      <meshBasicMaterial
+      <planeGeometry args={[Math.min(size[0], 0.22), Math.min(size[1], 0.045)]} />
+      <meshStandardMaterial
         map={texture}
+        transparent
+        depthWrite={false}
+        roughness={0.72}
         polygonOffset
         polygonOffsetFactor={-2}
-        toneMapped={false}
       />
     </mesh>
   );
@@ -244,9 +241,9 @@ function StatusLed({
     <mesh position={position}>
       <sphereGeometry args={[radius, 12, 12]} />
       <meshStandardMaterial
-        color={active ? DATA_CENTER_PALETTE.cyan : DATA_CENTER_PALETTE.graphiteLight}
-        emissive={active ? DATA_CENTER_PALETTE.cyan : DATA_CENTER_PALETTE.black}
-        emissiveIntensity={active ? 1.35 : 0}
+        color={active ? DATA_CENTER_PALETTE.statusGreen : "#30392c"}
+        emissive={active ? DATA_CENTER_PALETTE.statusGreen : DATA_CENTER_PALETTE.black}
+        emissiveIntensity={active ? 0.45 : 0}
         roughness={0.35}
       />
     </mesh>
@@ -324,6 +321,122 @@ function PerforationGrid({
         toneMapped={false}
       />
     </instancedMesh>
+  );
+}
+
+/** Repeated machined details share geometry and material to keep the hero light. */
+function DetailBoxes({
+  positions,
+  size,
+  color,
+  metalness = 0.65,
+  roughness = 0.4,
+}: {
+  positions: readonly Vec3[];
+  size: Vec3;
+  color: string;
+  metalness?: number;
+  roughness?: number;
+}) {
+  const ref = useRef<InstancedMesh>(null);
+
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    const matrix = new Matrix4();
+    positions.forEach((position, index) => {
+      matrix.makeTranslation(...position);
+      ref.current?.setMatrixAt(index, matrix);
+    });
+    ref.current.instanceMatrix.needsUpdate = true;
+    ref.current.computeBoundingSphere();
+  }, [positions]);
+
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, positions.length]} castShadow>
+      <boxGeometry args={size} />
+      <meshStandardMaterial color={color} metalness={metalness} roughness={roughness} />
+    </instancedMesh>
+  );
+}
+
+function ScrewBank({ positions, radius = 0.01 }: { positions: readonly Vec3[]; radius?: number }) {
+  const ref = useRef<InstancedMesh>(null);
+
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    const matrix = new Matrix4();
+    positions.forEach((position, index) => {
+      matrix.makeTranslation(...position);
+      ref.current?.setMatrixAt(index, matrix);
+    });
+    ref.current.instanceMatrix.needsUpdate = true;
+    ref.current.computeBoundingSphere();
+  }, [positions]);
+
+  return (
+    <group>
+      <instancedMesh ref={ref} args={[undefined, undefined, positions.length]}>
+        <circleGeometry args={[radius, 16]} />
+        <meshStandardMaterial color={DATA_CENTER_PALETTE.aluminum} metalness={0.86} roughness={0.3} />
+      </instancedMesh>
+      <DetailBoxes
+        positions={positions.map(([x, y, z]) => [x, y, z + 0.001])}
+        size={[radius * 1.18, radius * 0.23, 0.001]}
+        color={DATA_CENTER_PALETTE.black}
+        metalness={0.15}
+      />
+    </group>
+  );
+}
+
+/** Alpha-cut perforated steel has true open holes, including in its shadow. */
+function PerforatedSheet({
+  position,
+  size,
+  pitch = 0.04,
+}: {
+  position: Vec3;
+  size: [number, number];
+  pitch?: number;
+}) {
+  const [width, height] = size;
+  const alphaMap = useMemo(() => {
+    if (typeof document === "undefined") return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.fillStyle = "white";
+    context.fillRect(0, 0, 128, 128);
+    context.fillStyle = "black";
+    [[32, 32], [96, 32], [0, 96], [64, 96], [128, 96]].forEach(([x, y]) => {
+      context.beginPath();
+      context.arc(x, y, 24, 0, Math.PI * 2);
+      context.fill();
+    });
+    const texture = new CanvasTexture(canvas);
+    texture.wrapS = RepeatWrapping;
+    texture.wrapT = RepeatWrapping;
+    texture.repeat.set(width / (pitch * 2), height / (pitch * 2));
+    texture.anisotropy = 8;
+    return texture;
+  }, [height, pitch, width]);
+
+  useEffect(() => () => alphaMap?.dispose(), [alphaMap]);
+
+  return (
+    <mesh position={position} castShadow receiveShadow>
+      <planeGeometry args={size} />
+      <meshStandardMaterial
+        color={DATA_CENTER_PALETTE.graphite}
+        alphaMap={alphaMap}
+        alphaTest={0.5}
+        metalness={0.68}
+        roughness={0.47}
+        side={DoubleSide}
+      />
+    </mesh>
   );
 }
 
@@ -593,11 +706,9 @@ function RackCableBundle() {
         <mesh key={`rack-cable-${index}`}>
           <tubeGeometry args={[curve, 28, 0.0055, 7, false]} />
           <meshStandardMaterial
-            color={index % 2 === 0 ? "#35c8f0" : "#219ec4"}
-            emissive="#35c8f0"
-            emissiveIntensity={0.14}
+            color={index % 3 === 0 ? "#686e6b" : "#323a39"}
             metalness={0.06}
-            roughness={0.4}
+            roughness={0.78}
           />
         </mesh>
       ))}
@@ -649,6 +760,7 @@ function RackBlankPanel({ position }: { position: Vec3 }) {
 
 export type DemoRackFrameProps = DataCenterModelGroupProps & {
   doorOpen?: number;
+  showDoor?: boolean;
   doorRef?: Ref<Group>;
   showCables?: boolean;
   onSelect?: ModelSelectHandler;
@@ -661,6 +773,7 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
   function DemoRackFrame(
     {
       doorOpen = 0.78,
+      showDoor = true,
       doorRef,
       showCables = true,
       onSelect,
@@ -677,7 +790,7 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
       <group ref={ref} {...props}>
         <RoundedBox
           args={[1.4, 0.13, 1.38]}
-          radius={0.025}
+          radius={0.009}
           smoothness={3}
           position={[0, 1.535, 0]}
           castShadow
@@ -690,7 +803,7 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
         </RoundedBox>
         <RoundedBox
           args={[1.4, 0.16, 1.38]}
-          radius={0.022}
+          radius={0.009}
           smoothness={3}
           position={[0, -1.52, 0]}
           castShadow
@@ -786,7 +899,7 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
             <RoundedBox
               key={`rack-post-${x}-${z}`}
               args={[0.075, 3.06, 0.075]}
-              radius={0.016}
+              radius={0.006}
               smoothness={2}
               position={[x, 0, z]}
               castShadow
@@ -836,12 +949,12 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
                 roughness={0.31}
               />
             </mesh>
-            {RACK_UNIT_MARKERS.map((y, index) => (
+            {RACK_UNIT_MARKERS.map((y) => (
               <group key={`${x}-${y}`} position={[0, y, 0.021]}>
                 <mesh>
                   <boxGeometry args={[0.018, 0.026, 0.008]} />
                   <meshStandardMaterial
-                    color={index % 5 === 0 ? DATA_CENTER_PALETTE.coolWhite : DATA_CENTER_PALETTE.black}
+                    color={DATA_CENTER_PALETTE.black}
                     metalness={0.32}
                     roughness={0.7}
                   />
@@ -879,13 +992,6 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
               </mesh>
             </group>
           ))}
-          <EquipmentLabel
-            title="CABLE PATH"
-            subtitle="NEXT SOLUTIONS"
-            position={[-0.077, 1.3, 0.057]}
-            size={[0.14, 0.05]}
-            align="center"
-          />
         </group>
 
         {showCables ? <RackCableBundle /> : null}
@@ -914,6 +1020,7 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
         ))}
 
         <group
+          visible={showDoor}
           ref={doorRef}
           position={[-0.72, 0, 0.705]}
           rotation={[0, -normalizedDoorOpen * 2.72, 0]}
@@ -939,25 +1046,10 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
                 />
               </mesh>
             ))}
-            <mesh position={[0, 0, 0.006]}>
-              <boxGeometry args={[1.26, 2.96, 0.014]} />
-              <meshStandardMaterial
-                color="#10161a"
-                metalness={0.52}
-                opacity={0.82}
-                roughness={0.52}
-                side={DoubleSide}
-                transparent
-              />
-            </mesh>
-            <PerforationGrid
+            <PerforatedSheet
               position={[0, 0, 0.016]}
-              columns={22}
-              rows={48}
-              spacingX={0.053}
-              spacingY={0.061}
-              radius={0.0095}
-              color="#28323a"
+              size={[1.26, 2.96]}
+              pitch={0.035}
             />
             <RoundedBox
               args={[0.052, 0.5, 0.055]}
@@ -981,8 +1073,21 @@ export const DemoRackFrame = forwardRef<Group, DemoRackFrameProps>(
                 />
               </mesh>
             ))}
+            <ScrewBank
+              positions={[-0.655, 0.655].flatMap((x) =>
+                [-1.515, -0.9, 0.9, 1.515].map((y) => [x, y, 0.032] as Vec3),
+              )}
+              radius={0.009}
+            />
           </group>
         </group>
+
+        <ScrewBank
+          positions={[-0.66, 0.66].flatMap((x) =>
+            [-1.49, -1.31, 1.31, 1.49].map((y) => [x, y, 0.696] as Vec3),
+          )}
+          radius={0.014}
+        />
 
         <EquipmentLabel
           title={label}
@@ -1034,10 +1139,10 @@ export const RackServerUnit = forwardRef<Group, RackServerUnitProps>(
 
     return (
       <group ref={ref} {...props}>
-        <RoundedBox args={[1.08, height, 1.02]} radius={0.018} smoothness={3} castShadow>
+        <RoundedBox args={[1.08, height, 1.02]} radius={0.006} smoothness={3} castShadow>
           <meshStandardMaterial
-            color={DATA_CENTER_PALETTE.graphite}
-            metalness={0.62}
+            color={DATA_CENTER_PALETTE.aluminum}
+            metalness={0.8}
             roughness={0.43}
           />
         </RoundedBox>
@@ -1064,15 +1169,23 @@ export const RackServerUnit = forwardRef<Group, RackServerUnitProps>(
               smoothness={2}
             >
               <meshStandardMaterial
-                color={DATA_CENTER_PALETTE.graphiteLight}
-                metalness={0.58}
+                  color="#343938"
+                  metalness={0.48}
                 roughness={0.48}
               />
             </RoundedBox>
             <mesh position={[0.037, 0, 0.017]}>
               <boxGeometry args={[0.009, rows === 2 ? height * 0.22 : height * 0.38, 0.008]} />
-              <meshStandardMaterial color={DATA_CENTER_PALETTE.coolWhite} roughness={0.54} />
+              <meshStandardMaterial color="#666e68" metalness={0.6} roughness={0.48} />
             </mesh>
+            <PerforationGrid
+              position={[-0.014, 0, 0.019]}
+              columns={5}
+              rows={2}
+              spacingX={0.014}
+              spacingY={height * 0.11}
+              radius={0.004}
+            />
             {index === 0 ? (
               <StatusLed
                 position={[-0.045, rows === 2 ? height * 0.1 : height * 0.19, 0.018]}
@@ -1103,7 +1216,7 @@ export const RackServerUnit = forwardRef<Group, RackServerUnitProps>(
             args={[0.026, height * 0.72, 0.055]}
             radius={0.006}
             smoothness={2}
-            position={[x, 0, 0.45]}
+            position={[x, 0, 0.568]}
           >
             <meshStandardMaterial
               color={DATA_CENTER_PALETTE.mutedWhite}
@@ -1112,6 +1225,13 @@ export const RackServerUnit = forwardRef<Group, RackServerUnitProps>(
             />
           </RoundedBox>
         ))}
+
+        <ScrewBank
+          positions={[-0.524, 0.524].flatMap((x) =>
+            [-height * 0.34, height * 0.34].map((y) => [x, y, 0.584] as Vec3),
+          )}
+          radius={0.006}
+        />
 
         <EquipmentLabel
           title={label}
@@ -1159,13 +1279,19 @@ export const NetworkSwitchModel = forwardRef<Group, NetworkSwitchModelProps>(
     const normalizedPortCount = Math.min(24, Math.max(8, Math.round(portCount)));
     const columns = Math.ceil(normalizedPortCount / 2);
     const activePortSet = useMemo(() => new Set(activePorts), [activePorts]);
+    const portPositions = useMemo<Vec3[]>(() =>
+      Array.from({ length: normalizedPortCount }, (_, index) => [
+        0.02 + ((index % columns) - (columns - 1) / 2) * 0.048,
+        index >= columns ? -0.021 : 0.021,
+        0.376,
+      ]), [columns, normalizedPortCount]);
 
     return (
       <group ref={ref} {...props}>
-        <RoundedBox args={[1.08, 0.105, 0.7]} radius={0.016} smoothness={3} castShadow>
+        <RoundedBox args={[1.08, 0.105, 0.7]} radius={0.004} smoothness={3} castShadow>
           <meshStandardMaterial
-            color={DATA_CENTER_PALETTE.graphite}
-            metalness={0.6}
+            color={DATA_CENTER_PALETTE.aluminum}
+            metalness={0.82}
             roughness={0.45}
           />
         </RoundedBox>
@@ -1178,42 +1304,43 @@ export const NetworkSwitchModel = forwardRef<Group, NetworkSwitchModelProps>(
           />
         </mesh>
 
-        {Array.from({ length: normalizedPortCount }, (_, index) => {
-          const row = index >= columns ? 1 : 0;
-          const column = index % columns;
-          const x = 0.02 + (column - (columns - 1) / 2) * 0.048;
-          const y = row === 0 ? 0.021 : -0.021;
-          const isActive = activePortSet.has(index);
-          return (
-            <group key={`network-port-${index}`} position={[x, y, 0.376]}>
-              <mesh>
-                <boxGeometry args={[0.032, 0.025, 0.014]} />
-                <meshStandardMaterial
-                  color={DATA_CENTER_PALETTE.black}
-                  metalness={0.28}
-                  roughness={0.78}
-                />
-              </mesh>
-              <mesh position={[0, 0.004, 0.008]}>
-                <boxGeometry args={[0.021, 0.006, 0.003]} />
-                <meshStandardMaterial
-                  color={isActive ? DATA_CENTER_PALETTE.cyan : DATA_CENTER_PALETTE.mutedWhite}
-                  emissive={isActive ? DATA_CENTER_PALETTE.cyan : DATA_CENTER_PALETTE.black}
-                  emissiveIntensity={isActive ? 0.95 : 0}
-                  roughness={0.46}
-                />
-              </mesh>
-            </group>
-          );
-        })}
+        <DetailBoxes positions={portPositions} size={[0.036, 0.031, 0.016]} color="#a3aaa6" metalness={0.85} />
+        <DetailBoxes
+          positions={portPositions.map(([x, y, z]) => [x, y, z + 0.01])}
+          size={[0.029, 0.023, 0.008]}
+          color="#050606"
+          metalness={0.12}
+          roughness={0.82}
+        />
+        <DetailBoxes
+          positions={portPositions.map(([x, y, z]) => [x, y + 0.012, z + 0.011])}
+          size={[0.012, 0.007, 0.008]}
+          color="#050606"
+          metalness={0.12}
+        />
+        <DetailBoxes
+          positions={portPositions.flatMap(([x, y, z]) =>
+            Array.from({ length: 8 }, (_, pin) => [x + (pin - 3.5) * 0.0028, y - 0.004, z + 0.014] as Vec3),
+          )}
+          size={[0.0012, 0.008, 0.001]}
+          color="#a69963"
+          metalness={0.76}
+        />
+        {portPositions.map(([x, y, z], index) => activePortSet.has(index) ? (
+          <StatusLed key={`network-link-${index}`} position={[x + 0.012, y - 0.014, z + 0.011]} radius={0.0023} />
+        ) : null)}
 
         {[0.39, 0.45].map((x, index) => (
           <group key={`sfp-port-${x}`} position={[x, 0, 0.376]}>
             <mesh>
-              <boxGeometry args={[0.042, 0.045, 0.014]} />
+              <boxGeometry args={[0.044, 0.027, 0.018]} />
+              <meshStandardMaterial color={DATA_CENTER_PALETTE.aluminum} metalness={0.82} roughness={0.36} />
+            </mesh>
+            <mesh position={[0, 0, 0.011]}>
+              <boxGeometry args={[0.036, 0.019, 0.008]} />
               <meshStandardMaterial color={DATA_CENTER_PALETTE.black} roughness={0.78} />
             </mesh>
-            <StatusLed position={[0.014, 0.031, 0.008]} radius={0.0045} active={index === 0} />
+            <StatusLed position={[0.014, 0.02, 0.008]} radius={0.0025} active={index === 0} />
           </group>
         ))}
 
@@ -1290,16 +1417,16 @@ export const NasApplianceModel = forwardRef<Group, NasApplianceModelProps>(
 
     return (
       <group ref={ref} {...props}>
-        <RoundedBox args={[0.9, 0.54, 0.72]} radius={0.045} smoothness={5} castShadow>
+        <RoundedBox args={[0.9, 0.54, 0.72]} radius={0.014} smoothness={4} castShadow>
           <meshStandardMaterial
-            color={DATA_CENTER_PALETTE.graphite}
-            metalness={0.42}
+            color="#333836"
+            metalness={0.58}
             roughness={0.58}
           />
         </RoundedBox>
         <RoundedBox
           args={[0.86, 0.5, 0.032]}
-          radius={0.028}
+          radius={0.011}
           smoothness={4}
           position={[0, 0, 0.376]}
         >
@@ -1315,32 +1442,44 @@ export const NasApplianceModel = forwardRef<Group, NasApplianceModelProps>(
           const populated = index < normalizedPopulatedBays;
           return (
             <group key={`nas-bay-${index}`} position={[x, -0.01, 0.4]}>
-              <RoundedBox args={[bayWidth, 0.31, 0.028]} radius={0.01} smoothness={2}>
+              <RoundedBox args={[bayWidth, 0.36, 0.028]} radius={0.004} smoothness={2}>
                 <meshStandardMaterial
-                  color={populated ? DATA_CENTER_PALETTE.graphiteLight : DATA_CENTER_PALETTE.black}
-                  metalness={0.48}
-                  roughness={0.6}
+                  color={populated ? "#343936" : DATA_CENTER_PALETTE.black}
+                  metalness={0.25}
+                  roughness={0.72}
                 />
               </RoundedBox>
-              <mesh position={[0, 0.11, 0.019]}>
-                <boxGeometry args={[bayWidth * 0.58, 0.025, 0.008]} />
+              <mesh position={[0, 0.015, 0.017]}>
+                <boxGeometry args={[bayWidth * 0.69, 0.235, 0.008]} />
                 <meshStandardMaterial
-                  color={DATA_CENTER_PALETTE.coolWhite}
-                  metalness={0.52}
-                  roughness={0.42}
+                  color="#141916"
+                  metalness={0.15}
+                  roughness={0.8}
                 />
               </mesh>
-              <mesh position={[0, -0.112, 0.02]} rotation={[Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[Math.min(0.014, bayWidth * 0.18), 0.003, 8, 18]} />
+              <RoundedBox
+                args={[bayWidth * 0.6, 0.22, 0.022]}
+                radius={0.004}
+                smoothness={2}
+                position={[0, 0.018, 0.025]}
+              >
+                <meshStandardMaterial color="#363c38" metalness={0.32} roughness={0.65} />
+              </RoundedBox>
+              <mesh position={[0, -0.14, 0.02]}>
+                <ringGeometry args={[0.009, Math.min(0.015, bayWidth * 0.18), 20]} />
                 <meshStandardMaterial
-                  color={DATA_CENTER_PALETTE.mutedWhite}
-                  metalness={0.7}
-                  roughness={0.3}
+                  color="#5a635d"
+                  metalness={0.76}
+                  roughness={0.4}
                 />
+              </mesh>
+              <mesh position={[0, -0.14, 0.021]}>
+                <circleGeometry args={[0.009, 18]} />
+                <meshStandardMaterial color={DATA_CENTER_PALETTE.black} roughness={0.7} />
               </mesh>
               <StatusLed
-                position={[bayWidth * 0.28, 0.137, 0.02]}
-                radius={0.0045}
+                position={[bayWidth * 0.28, 0.155, 0.02]}
+                radius={0.003}
                 active={populated}
               />
             </group>
@@ -1352,24 +1491,40 @@ export const NasApplianceModel = forwardRef<Group, NasApplianceModelProps>(
             <StatusLed
               key={`nas-status-${y}`}
               position={[0, y, 0]}
-              radius={0.005}
+              radius={0.003}
               active={index <= normalizedPopulatedBays - 1}
             />
           ))}
           <mesh position={[0, -0.125, 0]}>
-            <circleGeometry args={[0.025, 24]} />
+            <circleGeometry args={[0.019, 24]} />
             <meshStandardMaterial
               color={DATA_CENTER_PALETTE.graphiteLight}
-              emissive={DATA_CENTER_PALETTE.cyan}
-              emissiveIntensity={0.18}
               metalness={0.54}
               roughness={0.36}
             />
           </mesh>
           <mesh position={[0, -0.125, 0.006]}>
-            <ringGeometry args={[0.017, 0.021, 20]} />
-            <meshBasicMaterial color={DATA_CENTER_PALETTE.cyan} toneMapped={false} />
+            <ringGeometry args={[0.012, 0.014, 24, 1, Math.PI * 0.22, Math.PI * 1.56]} />
+            <meshStandardMaterial color={DATA_CENTER_PALETTE.mutedWhite} roughness={0.48} />
           </mesh>
+          <mesh position={[0, -0.116, 0.007]}>
+            <boxGeometry args={[0.002, 0.016, 0.001]} />
+            <meshStandardMaterial color={DATA_CENTER_PALETTE.mutedWhite} roughness={0.48} />
+          </mesh>
+          <mesh position={[0, -0.185, 0.005]}>
+            <boxGeometry args={[0.045, 0.021, 0.007]} />
+            <meshStandardMaterial color="#9fa8a2" metalness={0.8} roughness={0.35} />
+          </mesh>
+          <mesh position={[0, -0.185, 0.009]}>
+            <boxGeometry args={[0.037, 0.014, 0.004]} />
+            <meshStandardMaterial color="#1c2930" roughness={0.6} />
+          </mesh>
+        </group>
+
+        <VentBank position={[-0.07, -0.219, 0.397]} columns={24} spacing={0.025} slotSize={[0.012, 0.02, 0.005]} />
+        <group position={[0.453, 0, -0.01]} rotation={[0, Math.PI / 2, 0]}>
+          <PerforationGrid position={[0, 0, 0]} columns={12} rows={7} spacingX={0.037} spacingY={0.035} radius={0.008} />
+          <ScrewBank positions={[[-0.29, 0.22, 0], [0.29, 0.22, 0], [-0.29, -0.22, 0], [0.29, -0.22, 0]]} radius={0.007} />
         </group>
 
         <EquipmentLabel
@@ -1377,13 +1532,6 @@ export const NasApplianceModel = forwardRef<Group, NasApplianceModelProps>(
           subtitle="NEXT SOLUTIONS"
           position={[0.06, 0.235, 0.403]}
           size={[0.37, 0.065]}
-          align="center"
-        />
-        <EquipmentLabel
-          title="2.5GbE"
-          subtitle="HOT-SWAP"
-          position={[0.34, 0.19, 0.404]}
-          size={[0.13, 0.05]}
           align="center"
         />
         {[-0.36, 0.36].map((x) => (
@@ -1569,9 +1717,9 @@ export const UpsModel = forwardRef<Group, UpsModelProps>(function UpsModel(
         <mesh key={`ups-load-${index}`} position={[0.172 + index * 0.039, -0.026, 0.515]}>
           <boxGeometry args={[0.027, 0.035 + index * 0.008, 0.006]} />
           <meshStandardMaterial
-            color={index < illuminatedSegments ? DATA_CENTER_PALETTE.cyan : DATA_CENTER_PALETTE.graphiteLight}
-            emissive={index < illuminatedSegments ? DATA_CENTER_PALETTE.cyan : DATA_CENTER_PALETTE.black}
-            emissiveIntensity={index < illuminatedSegments ? 0.86 : 0}
+            color={index < illuminatedSegments ? "#a8b7a4" : "#28332c"}
+            emissive={index < illuminatedSegments ? "#879d7d" : DATA_CENTER_PALETTE.black}
+            emissiveIntensity={index < illuminatedSegments ? 0.25 : 0}
             roughness={0.44}
           />
         </mesh>
@@ -1698,8 +1846,8 @@ export const ComputeServiceTray = forwardRef<Group, ComputeServiceTrayProps>(
         >
           <meshStandardMaterial
             color={DATA_CENTER_PALETTE.graphite}
-            emissive={selectedComponent ? DATA_CENTER_PALETTE.cyan : DATA_CENTER_PALETTE.black}
-            emissiveIntensity={selectedComponent ? 0.06 : 0}
+            emissive={DATA_CENTER_PALETTE.coolWhite}
+            emissiveIntensity={selectedComponent ? 0.025 : 0}
             metalness={0.58}
             roughness={0.48}
           />
@@ -1849,7 +1997,7 @@ export const ComputeServiceTray = forwardRef<Group, ComputeServiceTrayProps>(
         >
           <GpuModel />
           {[-0.23, 0.23].map((x) => (
-            <mesh key={`gpu-support-${x}`} position={[x, -0.11, -0.03]}>
+            <mesh visible={selectedComponent !== "gpu"} key={`gpu-support-${x}`} position={[x, -0.11, -0.03]}>
               <boxGeometry args={[0.025, 0.16, 0.08]} />
               <meshStandardMaterial
                 color={DATA_CENTER_PALETTE.coolWhite}
@@ -1968,9 +2116,9 @@ export const OperatorWorkstation = forwardRef<Group, OperatorWorkstationProps>(
           receiveShadow
         >
           <meshStandardMaterial
-            color="#252d33"
-            metalness={0.46}
-            roughness={0.44}
+            color="#202427"
+            metalness={0.18}
+            roughness={0.72}
           />
         </RoundedBox>
 
@@ -2085,30 +2233,6 @@ export const OperatorWorkstation = forwardRef<Group, OperatorWorkstationProps>(
           </mesh>
         ))}
 
-        <mesh position={[-0.18, 0.875, -0.52]}>
-          <boxGeometry args={[2.1, 0.024, 0.03]} />
-          <meshStandardMaterial
-            color={DATA_CENTER_PALETTE.cyan}
-            emissive={DATA_CENTER_PALETTE.cyan}
-            emissiveIntensity={1.45}
-            roughness={0.4}
-          />
-        </mesh>
-        <pointLight
-          color={DATA_CENTER_PALETTE.cyan}
-          distance={2.8}
-          intensity={7.5}
-          position={[-0.18, 0.9, -0.22]}
-          decay={2}
-        />
-        <pointLight
-          color="#e7f7ff"
-          distance={4.2}
-          intensity={14}
-          position={[0.1, 2.05, 1.42]}
-          decay={2}
-        />
-
         <RoundedBox
           args={[1.58, 0.018, 0.72]}
           radius={0.025}
@@ -2194,7 +2318,6 @@ export const OperatorWorkstation = forwardRef<Group, OperatorWorkstationProps>(
           size={[0.46, 0.08]}
           align="center"
         />
-        <StatusLed position={[1.28, 0.69, 0.478]} radius={0.01} />
 
         <InteractiveHitbox
           disabled={!interactive}

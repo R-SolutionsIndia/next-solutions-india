@@ -118,11 +118,11 @@ export const CAMERA_PRESETS: Record<
   SceneTarget,
   { position: readonly [number, number, number]; target: readonly [number, number, number] }
 > = {
-  overview: { position: [5, 2.88, 6.2], target: [1.55, 1.48, -0.08] },
+  overview: { position: [5.3, 3.05, 7.2], target: [1.55, 1.48, -0.08] },
   rack: { position: [4.25, 2.58, 4.5], target: [1.25, 1.78, 0.62] },
   workstation: { position: [6.72, 2.92, 5.36], target: [3.72, 1.34, 0.48] },
-  nas: { position: [3.55, 2.72, 4.7], target: [-0.72, 2.48, 1.78] },
-  "network-switch": { position: [3.58, 3.2, 4.68], target: [-0.72, 2.9, 1.78] },
+  nas: { position: [0.9, 3.6, 5.2], target: [-0.72, 2.48, 1.78] },
+  "network-switch": { position: [0.9, 3.9, 5.2], target: [-0.72, 2.9, 1.78] },
   monitor: { position: [5.1, 2.42, 4.95], target: [2.2, 1.82, 1.42] },
   keyboard: { position: [5.02, 1.98, 4.72], target: [2.35, 1.4, 1.52] },
   mouse: { position: [5.02, 1.92, 4.7], target: [2.5, 1.35, 1.56] },

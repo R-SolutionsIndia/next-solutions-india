@@ -18,7 +18,7 @@ const TARGET_EPSILON = 0.006;
 
 function getTargetFov(focus: string, mobile: boolean) {
   if (mobile) {
-    return focus === "overview" ? 52 : focus === "rack" || focus === "workstation" ? 46 : 43;
+    return focus === "overview" ? 44 : focus === "rack" || focus === "workstation" ? 46 : 43;
   }
   return focus === "overview" ? 37 : focus === "rack" || focus === "workstation" ? 33 : 30;
 }
@@ -27,6 +27,7 @@ export function CameraRig({ controlsRef }: CameraRigProps) {
   const focus = useSceneStore((state) => state.focus);
   const reducedMotion = useSceneStore((state) => state.reducedMotion);
   const viewportWidth = useThree((state) => state.size.width);
+  const viewportHeight = useThree((state) => state.size.height);
   const mobile = viewportWidth < 861;
   const isTransitioning = useRef(true);
   const desiredPosition = useRef(new Vector3(...CAMERA_PRESETS.overview.position));
@@ -39,14 +40,11 @@ export function CameraRig({ controlsRef }: CameraRigProps) {
       desiredPosition.current.set(...preset.position);
       desiredTarget.current.set(...preset.target);
       if (mobile) {
-        const distanceMultiplier = focus === "overview" ? 1.25 : 1.18;
-        desiredPosition.current
-          .sub(desiredTarget.current)
-          .multiplyScalar(distanceMultiplier)
-          .add(desiredTarget.current);
         if (focus === "overview") {
-          desiredTarget.current.x += 0.22;
-          desiredTarget.current.y += 0.24;
+          desiredPosition.current.set(6, 3.05, 6.6);
+          desiredTarget.current.set(3.55, 1.65, 0);
+        } else {
+          desiredPosition.current.sub(desiredTarget.current).multiplyScalar(1.18).add(desiredTarget.current);
         }
       }
       isTransitioning.current = true;
@@ -61,6 +59,14 @@ export function CameraRig({ controlsRef }: CameraRigProps) {
   useFrame(({ camera }, delta) => {
     const controls = controlsRef.current;
     const perspectiveCamera = camera as PerspectiveCamera;
+    const inspecting = focus !== "overview" && focus !== "rack" && focus !== "workstation";
+    if (inspecting) {
+      perspectiveCamera.setViewOffset(viewportWidth, viewportHeight,
+        mobile ? 0 : Math.min(390, viewportWidth * 0.3) / 2,
+        mobile ? viewportHeight * 0.38 : 0, viewportWidth, viewportHeight);
+    } else if (perspectiveCamera.view?.enabled) {
+      perspectiveCamera.clearViewOffset();
+    }
 
     if (reducedMotion) {
       if (isTransitioning.current) {

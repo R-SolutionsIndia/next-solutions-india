@@ -1,7 +1,7 @@
 "use client";
 
-import { ContactShadows, Html, OrbitControls } from "@react-three/drei";
-import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Suspense, useMemo, useRef, type RefObject } from "react";
 import { MathUtils, type Group } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -12,7 +12,6 @@ import { CameraRig } from "./CameraRig";
 import {
   COMPUTE_TRAY_COMPONENT_TRANSFORMS,
   ComputeServiceTray,
-  DataCenterEnvironment,
   DEMO_RACK_LOCAL_Y,
   DemoRackFrame,
   NasApplianceModel,
@@ -54,11 +53,11 @@ const EQUIPMENT_TO_PRODUCT: Record<OperatorEquipmentId, ProductTarget> = {
 };
 
 const COMPUTE_PRESENT_SCALE: Record<ComputeComponentId, number> = {
-  "sata-ssd": 3.25,
-  "nvme-ssd": 5.6,
-  ram: 3.15,
-  gpu: 2.25,
-  hdd: 2.65,
+  "sata-ssd": 5.2,
+  "nvme-ssd": 8.4,
+  ram: 5,
+  gpu: 3.6,
+  hdd: 4.2,
 };
 
 const COMPUTE_PRESENT_LOCAL_X: Record<ComputeComponentId, number> = {
@@ -99,7 +98,6 @@ const OPERATOR_PRESENT_ROTATIONS: Record<
   "external-ssd": [0.52, -0.4, 0.04],
 };
 
-const ENVIRONMENT_SCALE: [number, number, number] = [1.14, 1.08, 1.1];
 const RACK_POSITION: [number, number, number] = [1.25, 1.69, -0.15];
 const RACK_SCALE: [number, number, number] = [1.08, 1.02, 1.08];
 const WORKSTATION_POSITION: [number, number, number] = [3.85, 0, 0.16];
@@ -109,46 +107,9 @@ const OVERVIEW_WORKSTATION_OFFSET_X = 0.7;
 const OPERATOR_INSPECTION_RACK_OFFSET: [number, number] = [-1.65, -0.52];
 const RACK_INSPECTION_WORKSTATION_OFFSET: [number, number] = [1.45, -0.38];
 const PARKED_RACK_DOOR_OPEN = Math.PI / 2 / 2.72;
-const HERO_AMBIENT_RACKS = [
-  { position: [-1.45, 1.1, -2.72] as [number, number, number] },
-  { position: [-0.58, 1.1, -2.72] as [number, number, number] },
-] as const;
 
 function isComputeComponent(target: SceneTarget): target is ComputeComponentId {
   return COMPUTE_COMPONENTS.includes(target as ComputeComponentId);
-}
-
-function Hotspot({
-  label,
-  position,
-  onSelect,
-  side = "right",
-}: {
-  label: string;
-  position: [number, number, number];
-  onSelect: () => void;
-  side?: "left" | "right";
-}) {
-  return (
-    <Html
-      className={`${styles.hotspot} ${side === "left" ? styles.hotspotLeft : styles.hotspotRight}`}
-      position={position}
-      center
-      distanceFactor={5.5}
-      zIndexRange={[12, 6]}
-    >
-      <button
-        className={styles.hotspotButton}
-        onClick={(event) => {
-          event.stopPropagation();
-          onSelect();
-        }}
-        type="button"
-      >
-        {label}
-      </button>
-    </Html>
-  );
 }
 
 function DataCenterSetup() {
@@ -157,7 +118,6 @@ function DataCenterSetup() {
   const focusRack = useSceneStore((state) => state.focusRack);
   const focusWorkstation = useSceneStore((state) => state.focusWorkstation);
   const inspectProduct = useSceneStore((state) => state.inspectProduct);
-  const mobile = useThree((state) => state.size.width < 861);
 
   const inspectionLighting = useMemo(() => {
     if (focus === "overview" || focus === "rack") return null;
@@ -170,8 +130,8 @@ function DataCenterSetup() {
       key: [x + 1.25, y + 1.05, z + 2.35] as [number, number, number],
       fill: [x - 1.4, y + 0.12, z + 1.55] as [number, number, number],
       rim: [x + 0.25, y + 1.3, z - 0.85] as [number, number, number],
-      keyIntensity: enclosure ? 42 : workstationSetup ? 28 : 34,
-      fillIntensity: enclosure ? 24 : workstationSetup ? 15 : 18,
+      keyIntensity: enclosure ? 15 : workstationSetup ? 12 : 12,
+      fillIntensity: enclosure ? 8 : workstationSetup ? 6 : 6,
     };
   }, [focus]);
 
@@ -237,7 +197,6 @@ function DataCenterSetup() {
   const rackInspection =
     focus === "nas" || focus === "network-switch" || activeComponent !== null;
   const rackDeployed = focus === "rack" || activeComponent !== null;
-  const showOverviewHotspots = focus === "overview";
 
   const handleRackSelect: ModelSelectHandler = (event) => {
     event.stopPropagation();
@@ -304,7 +263,7 @@ function DataCenterSetup() {
     }
 
     const rackProgress = rackUnitProgress.current;
-    const trayTarget = focus === "overview" ? 0.55 : Number(rackDeployed);
+    const trayTarget = Number(rackDeployed);
     rackProgress.tray = reducedMotion
       ? trayTarget
       : MathUtils.damp(rackProgress.tray, trayTarget, 4.4, delta);
@@ -441,14 +400,14 @@ function DataCenterSetup() {
             position={inspectionLighting.key}
           />
           <pointLight
-            color="#5fd5ff"
+            color="#d8e2da"
             decay={2}
             distance={4.6}
             intensity={inspectionLighting.fillIntensity}
             position={inspectionLighting.fill}
           />
           <pointLight
-            color="#b9edff"
+            color="#ffffff"
             decay={2}
             distance={4}
             intensity={13}
@@ -457,12 +416,10 @@ function DataCenterSetup() {
         </>
       ) : null}
 
-      <DataCenterEnvironment
-        ambientRacks={HERO_AMBIENT_RACKS}
-        showAmbientRacks={!mobile && (focus === "overview" || focus === "rack")}
-        labLabel="NEXT SOLUTIONS"
-        scale={ENVIRONMENT_SCALE}
-      />
+      <mesh visible={focus === "overview" || focus === "rack" || focus === "workstation"} rotation={[-Math.PI / 2, 0, 0]} position={[2, -0.04, 0]} receiveShadow>
+        <planeGeometry args={[200, 200]} />
+        <meshLambertMaterial color="#090b0c" />
+      </mesh>
 
       <group
         ref={rackRootRef}
@@ -472,6 +429,7 @@ function DataCenterSetup() {
       >
         <DemoRackFrame
           doorOpen={PARKED_RACK_DOOR_OPEN}
+          showDoor={false}
           label="NEXT SOLUTIONS // RACK 01"
           showCables={focus !== "network-switch"}
           onSelect={handleRackSelect}
@@ -527,26 +485,7 @@ function DataCenterSetup() {
           />
         </DemoRackFrame>
 
-        {showOverviewHotspots ? (
-          <>
-            <Hotspot
-              label="Network"
-              position={[0.06, 0.79, 0.9]}
-              onSelect={() => inspectProduct("network-switch")}
-            />
-            <Hotspot
-              label="NAS"
-              position={[0, 0.39, 0.92]}
-              side="left"
-              onSelect={() => inspectProduct("nas")}
-            />
-            <Hotspot
-              label="Components"
-              position={[0.04, -0.03, 0.96]}
-              onSelect={focusRack}
-            />
-          </>
-        ) : null}
+
       </group>
 
       <OperatorWorkstation
@@ -563,73 +502,41 @@ function DataCenterSetup() {
         }}
       />
 
-      {showOverviewHotspots ? (
-        <>
-          <Hotspot
-            label="Setup"
-            position={[4.7, 0.96, 0.5]}
-            side="left"
-            onSelect={focusWorkstation}
-          />
-        </>
-      ) : null}
 
-      <ContactShadows
-        position={[1.8, 0.02, 0.02]}
-        scale={9.6}
-        opacity={0.44}
-        blur={2.8}
-        far={5}
-      />
+
+
     </group>
   );
 }
 
-export default function GamingCanvas() {
+export default function GamingCanvas({ active = true, onUnavailable }: { active?: boolean; onUnavailable?: () => void }) {
   const controlsRef = useRef<OrbitControlsImpl>(null);
+  const overview = useSceneStore((state) => state.focus === "overview");
 
   return (
     <Canvas
       className={styles.canvas}
-      camera={{ position: [5, 2.88, 6.2], fov: 37, near: 0.1, far: 40 }}
+      frameloop={active ? "always" : "never"}
+      onCreated={({ gl }) => {
+        if (onUnavailable) gl.domElement.addEventListener("webglcontextlost", onUnavailable, { once: true });
+      }}
+      camera={{ position: [5.3, 3.05, 7.2], fov: 37, near: 0.1, far: 40 }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-      shadows="basic"
+      shadows
     >
-      <color attach="background" args={["#020304"]} />
-      <fog attach="fog" args={["#020304", 8.4, 16.2]} />
-      <ambientLight intensity={0.62} />
-      <hemisphereLight color="#d6f2ff" groundColor="#050709" intensity={0.8} />
-      <spotLight
-        position={[2.8, 5.4, 3.4]}
-        color="#f5fbff"
-        intensity={110}
-        angle={0.52}
-        penumbra={0.72}
-        castShadow
-      />
-      <spotLight
-        position={[-1.8, 3.2, 2]}
-        color="#76dfff"
-        intensity={38}
-        angle={0.62}
-        penumbra={0.9}
-      />
-      <pointLight position={[2.1, 2.2, 1.8]} color="#72d8ff" intensity={10} distance={4.8} />
-      <pointLight
-        position={[4.72, 2.55, 2.36]}
-        color="#e7f7ff"
-        intensity={22}
-        distance={4.8}
-        decay={2}
-      />
-      <pointLight
-        position={[4.48, 0.82, 1.12]}
-        color="#35d8ff"
-        intensity={18}
-        distance={3.6}
-        decay={2}
-      />
+      <color attach="background" args={["#101214"]} />
+      <fog attach="fog" args={["#101214", 15, 32]} />
+      <ambientLight intensity={0.65} />
+      <hemisphereLight color="#f0f3ee" groundColor="#141714" intensity={0.9} />
+      <directionalLight position={[2, 7, 5]} color="#fff9ef" intensity={4.2} castShadow shadow-mapSize={[1024, 1024]} shadow-bias={-0.001} />
+      <directionalLight position={[-3, 3, -2]} color="#e4eae7" intensity={2} />
+      <spotLight position={[6, 5, 1]} color="#ffffff" intensity={45} angle={0.7} penumbra={1} />
+      <Environment resolution={256} frames={1} environmentIntensity={1.4}>
+        <Lightformer form="rect" intensity={3} color="#ffffff" position={[0, 6, 2]} rotation={[Math.PI / 2, 0, 0]} scale={[10, 5, 1]} />
+        <Lightformer form="rect" intensity={2} color="#e7ede8" position={[-5, 2, 3]} rotation={[0, Math.PI / 2, 0]} scale={[3, 6, 1]} />
+        <Lightformer form="rect" intensity={3} color="#ffffff" position={[5, 3, -4]} rotation={[0, Math.PI, 0]} scale={[2, 6, 1]} />
+      </Environment>
       <Suspense fallback={null}>
         <DataCenterSetup />
       </Suspense>
@@ -639,12 +546,13 @@ export default function GamingCanvas() {
         enableDamping
         dampingFactor={0.075}
         enablePan={false}
-        minDistance={5}
-        maxDistance={10.8}
-        minAzimuthAngle={-0.16}
-        maxAzimuthAngle={0.28}
-        minPolarAngle={1.02}
-        maxPolarAngle={1.4}
+        enableZoom={false}
+        minDistance={overview ? 5 : 0}
+        maxDistance={overview ? 13 : Infinity}
+        minAzimuthAngle={overview ? 0.12 : -Infinity}
+        maxAzimuthAngle={overview ? 0.65 : Infinity}
+        minPolarAngle={overview ? 1.02 : 0}
+        maxPolarAngle={overview ? 1.4 : Math.PI}
         target={[1.55, 1.48, -0.08]}
       />
       <CameraRig controlsRef={controlsRef} />
