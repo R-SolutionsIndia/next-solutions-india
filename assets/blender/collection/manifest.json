@@ -1,0 +1,309 @@
+{
+  "units": "metres",
+  "blender_up": "Z",
+  "gltf_up": "Y",
+  "front": "Blender -Y / glTF +Z",
+  "assets": {
+    "nas": {
+      "root": "NAS_4_BAY",
+      "file": "models/nas.glb",
+      "bytes": 2087092,
+      "triangles": 44508,
+      "mesh_objects": 41,
+      "dimensions_m": [
+        0.22609999775886536,
+        0.2827000021934509,
+        0.20100000500679016
+      ],
+      "moving_roots": [
+        "Fan rotor assembly",
+        "Fan rotor assembly.001",
+        "NAS_DRIVE_1",
+        "NAS_DRIVE_2",
+        "NAS_DRIVE_3",
+        "NAS_DRIVE_4"
+      ]
+    },
+    "hdd": {
+      "root": "HDD_3_5",
+      "file": "models/hdd.glb",
+      "bytes": 315668,
+      "triangles": 6948,
+      "mesh_objects": 9,
+      "dimensions_m": [
+        0.10160000622272491,
+        0.15049999952316284,
+        0.031599998474121094
+      ],
+      "moving_roots": []
+    },
+    "server": {
+      "root": "RACK_SERVER_2U",
+      "file": "models/server.glb",
+      "bytes": 1017040,
+      "triangles": 19251,
+      "mesh_objects": 13,
+      "dimensions_m": [
+        0.4869999885559082,
+        0.7009999752044678,
+        0.09210000187158585
+      ],
+      "moving_roots": []
+    },
+    "monitor": {
+      "root": "WORKSTATION_MONITOR",
+      "file": "models/monitor.glb",
+      "bytes": 1013224,
+      "triangles": 22037,
+      "mesh_objects": 11,
+      "dimensions_m": [
+        0.699999988079071,
+        0.1825796663761139,
+        0.5049999952316284
+      ],
+      "moving_roots": []
+    },
+    "sata-ssd": {
+      "root": "SATA-SSD",
+      "file": "models/sata-ssd.glb",
+      "bytes": 143968,
+      "triangles": 2566,
+      "mesh_objects": 6,
+      "dimensions_m": [
+        0.07015000283718109,
+        0.10305000841617584,
+        0.007999999448657036
+      ],
+      "moving_roots": []
+    },
+    "external-ssd": {
+      "root": "EXTERNAL-SSD",
+      "file": "models/external-ssd.glb",
+      "bytes": 118164,
+      "triangles": 2447,
+      "mesh_objects": 6,
+      "dimensions_m": [
+        0.05829999968409538,
+        0.10369999706745148,
+        0.009999999776482582
+      ],
+      "moving_roots": []
+    },
+    "nvme-ssd": {
+      "root": "NVME_2280",
+      "file": "models/nvme-ssd.glb",
+      "bytes": 314508,
+      "triangles": 6812,
+      "mesh_objects": 6,
+      "dimensions_m": [
+        0.02199999988079071,
+        0.07999999821186066,
+        0.004100000020116568
+      ],
+      "moving_roots": []
+    },
+    "ram": {
+      "root": "RAM_UDIMM",
+      "file": "models/ram.glb",
+      "bytes": 231520,
+      "triangles": 4989,
+      "mesh_objects": 5,
+      "dimensions_m": [
+        0.13334999978542328,
+        0.005800000391900539,
+        0.03099999949336052
+      ],
+      "moving_roots": []
+    },
+    "motherboard": {
+      "root": "MOTHERBOARD",
+      "file": "models/motherboard.glb",
+      "bytes": 2388304,
+      "triangles": 59422,
+      "mesh_objects": 9,
+      "dimensions_m": [
+        0.24699999392032623,
+        0.3050000071525574,
+        0.039000000804662704
+      ],
+      "moving_roots": []
+    },
+    "cpu-cooler": {
+      "root": "CPU_COOLER",
+      "file": "models/cpu-cooler.glb",
+      "bytes": 419452,
+      "triangles": 10832,
+      "mesh_objects": 7,
+      "dimensions_m": [
+        0.0820000022649765,
+        0.07514744997024536,
+        0.06750000268220901
+      ],
+      "moving_roots": [
+        "Fan rotor assembly.002"
+      ]
+    },
+    "gpu": {
+      "root": "GRAPHICS_CARD",
+      "file": "models/gpu.glb",
+      "bytes": 895332,
+      "triangles": 22655,
+      "mesh_objects": 13,
+      "dimensions_m": [
+        0.2900000214576721,
+        0.12350000441074371,
+        0.05999999865889549
+      ],
+      "moving_roots": [
+        "Fan rotor assembly.003",
+        "Fan rotor assembly.004",
+        "Fan rotor assembly.005"
+      ]
+    },
+    "mouse": {
+      "root": "WORKSTATION_MOUSE",
+      "file": "models/mouse.glb",
+      "bytes": 432704,
+      "triangles": 18116,
+      "mesh_objects": 7,
+      "dimensions_m": [
+        0.0784272700548172,
+        0.1284250020980835,
+        0.05259764939546585
+      ],
+      "moving_roots": []
+    },
+    "keyboard": {
+      "root": "WORKSTATION_KEYBOARD",
+      "file": "models/keyboard.glb",
+      "bytes": 1136288,
+      "triangles": 42630,
+      "mesh_objects": 8,
+      "dimensions_m": [
+        0.3199999928474426,
+        0.1350499987602234,
+        0.027800001204013824
+      ],
+      "moving_roots": []
+    },
+    "storage-array": {
+      "root": "RACK_STORAGE_ARRAY",
+      "file": "models/storage-array.glb",
+      "bytes": 733252,
+      "triangles": 20258,
+      "mesh_objects": 82,
+      "dimensions_m": [
+        0.48500001430511475,
+        0.667712926864624,
+        0.1340000033378601
+      ],
+      "moving_roots": [
+        "Fan rotor assembly.006",
+        "Fan rotor assembly.007",
+        "Fan rotor assembly.008",
+        "STORAGE_DRIVE_01",
+        "STORAGE_DRIVE_02",
+        "STORAGE_DRIVE_03",
+        "STORAGE_DRIVE_04",
+        "STORAGE_DRIVE_05",
+        "STORAGE_DRIVE_06",
+        "STORAGE_DRIVE_07",
+        "STORAGE_DRIVE_08",
+        "STORAGE_DRIVE_09",
+        "STORAGE_DRIVE_10",
+        "STORAGE_DRIVE_11",
+        "STORAGE_DRIVE_12"
+      ]
+    },
+    "network-switch": {
+      "root": "NETWORK_SWITCH_24",
+      "file": "models/network-switch.glb",
+      "bytes": 774668,
+      "triangles": 18389,
+      "mesh_objects": 8,
+      "dimensions_m": [
+        0.49542057514190674,
+        0.3375394940376282,
+        0.12774546444416046
+      ],
+      "moving_roots": []
+    },
+    "ups": {
+      "root": "RACK_UPS",
+      "file": "models/ups.glb",
+      "bytes": 245932,
+      "triangles": 5475,
+      "mesh_objects": 6,
+      "dimensions_m": [
+        0.4819999933242798,
+        0.4455000162124634,
+        0.12999999523162842
+      ],
+      "moving_roots": []
+    },
+    "power-supply": {
+      "root": "COMPUTE_PSU",
+      "file": "models/power-supply.glb",
+      "bytes": 303200,
+      "triangles": 8626,
+      "mesh_objects": 7,
+      "dimensions_m": [
+        0.15000000596046448,
+        0.1459999978542328,
+        0.10080000013113022
+      ],
+      "moving_roots": [
+        "Fan rotor assembly.009"
+      ]
+    },
+    "service-tray": {
+      "root": "SERVICE_TRAY",
+      "file": "models/service-tray.glb",
+      "bytes": 1643688,
+      "triangles": 37055,
+      "mesh_objects": 15,
+      "dimensions_m": [
+        0.44999998807907104,
+        0.5854039192199707,
+        0.15449999272823334
+      ],
+      "moving_roots": [
+        "Fan rotor assembly.010",
+        "Fan rotor assembly.011",
+        "Fan rotor assembly.012"
+      ]
+    },
+    "rack": {
+      "root": "RACK_CABINET",
+      "file": "models/rack.glb",
+      "bytes": 2037732,
+      "triangles": 42536,
+      "mesh_objects": 8,
+      "dimensions_m": [
+        0.6009999513626099,
+        0.7894999980926514,
+        1.5299999713897705
+      ],
+      "moving_roots": [
+        "RACK_DOOR_HINGE"
+      ]
+    },
+    "workstation-desk": {
+      "root": "WORKSTATION_DESK",
+      "file": "models/workstation-desk.glb",
+      "bytes": 194780,
+      "triangles": 5304,
+      "mesh_objects": 9,
+      "dimensions_m": [
+        1.25,
+        0.6499999761581421,
+        0.7950000166893005
+      ],
+      "moving_roots": [
+        "DESK_DRAWER_1",
+        "DESK_DRAWER_2",
+        "DESK_DRAWER_3"
+      ]
+    }
+  }
+}

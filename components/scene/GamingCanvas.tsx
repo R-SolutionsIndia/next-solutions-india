@@ -1,6 +1,6 @@
 "use client";
 
-import { Environment, Lightformer, OrbitControls } from "@react-three/drei";
+import { Environment, Html, Lightformer, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Suspense, useMemo, useRef, type RefObject } from "react";
 import { MathUtils, type Group } from "three";
@@ -26,7 +26,7 @@ import {
   type ModelSelectHandler,
   type OperatorEquipmentId,
   type OperatorEquipmentRefs,
-} from "./DataCenterModels";
+} from "./BlenderHardware";
 import styles from "./GamingHero.module.css";
 import { CAMERA_PRESETS } from "./scene-data";
 
@@ -74,8 +74,8 @@ const COMPUTE_PRESENT_ROTATION: Record<
 > = {
   "sata-ssd": [1.16, 0.34, -0.08],
   "nvme-ssd": [1.18, 0.3, -0.06],
-  ram: [-1.14, 0.34, -0.05],
-  gpu: [-0.08, 0.34, 0.025],
+  ram: [-0.12, 0.34, -0.05],
+  gpu: [Math.PI / 2, 0.34, 0.025],
   hdd: [1.12, 0.34, -0.08],
 };
 
@@ -83,10 +83,10 @@ const OPERATOR_PRESENT_TRANSFORMS: Record<
   OperatorEquipmentId,
   { x: number; y: number; z: number; scale: number }
 > = {
-  "primary-monitor": { x: -1.35, y: 1.74, z: 1.18, scale: 1.2 },
-  keyboard: { x: -1.25, y: 1.28, z: 1.28, scale: 1.3 },
-  mouse: { x: -1.08, y: 1.3, z: 1.34, scale: 2 },
-  "external-ssd": { x: -1, y: 1.26, z: 1.28, scale: 2.55 },
+  "primary-monitor": { x: -1.35, y: 2.4, z: 1.18, scale: 1.2 },
+  keyboard: { x: -1.25, y: 1.95, z: 1.28, scale: 1.3 },
+  mouse: { x: -1.08, y: 1.95, z: 1.34, scale: 2 },
+  "external-ssd": { x: -1, y: 1.95, z: 1.28, scale: 2.55 },
 };
 const OPERATOR_PRESENT_ROTATIONS: Record<
   OperatorEquipmentId,
@@ -106,7 +106,6 @@ const OVERVIEW_RACK_OFFSET_X = 1.3;
 const OVERVIEW_WORKSTATION_OFFSET_X = 0.7;
 const OPERATOR_INSPECTION_RACK_OFFSET: [number, number] = [-1.65, -0.52];
 const RACK_INSPECTION_WORKSTATION_OFFSET: [number, number] = [1.45, -0.38];
-const PARKED_RACK_DOOR_OPEN = Math.PI / 2 / 2.72;
 
 function isComputeComponent(target: SceneTarget): target is ComputeComponentId {
   return COMPUTE_COMPONENTS.includes(target as ComputeComponentId);
@@ -294,7 +293,7 @@ function DataCenterSetup() {
       nasRef.current.position.set(
         present * -1.62,
         DEMO_RACK_LOCAL_Y.nas + release * 0.08 + present * 0.08,
-        0.26 + clear * 1.34 + present * 0.16,
+        0.172 + clear * 1.34 + present * 0.16,
       );
       nasRef.current.rotation.set(-present * 0.04, -present * 0.2, present * 0.03);
       nasRef.current.scale.setScalar(1 + present * 0.24);
@@ -307,7 +306,7 @@ function DataCenterSetup() {
       networkRef.current.position.set(
         present * -1.64,
         DEMO_RACK_LOCAL_Y.networkSwitch + release * 0.08 + present * 0.08,
-        0.28 + clear * 1.3 + present * 0.16,
+        0.58 + clear * 1.3 + present * 0.16,
       );
       networkRef.current.rotation.set(0, -present * 0.16, 0);
       networkRef.current.scale.setScalar(1 + present * 0.32);
@@ -333,7 +332,7 @@ function DataCenterSetup() {
 
       group.position.set(
         base.position[0] + present * (presentX - base.position[0]),
-        base.position[1] + release * 0.2 + present * 0.08,
+        base.position[1] + release * 0.4 + present * 0.08,
         base.position[2] + clear * forwardClear + present * 0.28,
       );
       group.rotation.set(
@@ -423,43 +422,26 @@ function DataCenterSetup() {
 
       <group
         ref={rackRootRef}
+        visible={!operatorInspection || focus === "workstation"}
         position={RACK_POSITION}
         rotation={[0, -0.055, 0]}
         scale={RACK_SCALE}
       >
         <DemoRackFrame
-          doorOpen={PARKED_RACK_DOOR_OPEN}
-          showDoor={false}
-          label="NEXT SOLUTIONS // RACK 01"
-          showCables={focus !== "network-switch"}
           onSelect={handleRackSelect}
         >
           <RackServerUnit
-            position={[0, DEMO_RACK_LOCAL_Y.topServer, 0.12]}
-            unitHeight={0.27}
-            label="2U COMPUTE NODE"
-            interactive={false}
+            position={[0, DEMO_RACK_LOCAL_Y.topServer, 0.3225]}
           />
           <NetworkSwitchModel
             ref={networkRef}
-            position={[0, DEMO_RACK_LOCAL_Y.networkSwitch, 0.28]}
-            portCount={24}
-            label="NS-24 MANAGED"
+            position={[0, DEMO_RACK_LOCAL_Y.networkSwitch, 0.58]}
             onSelect={handleProductSelect("network-switch")}
           />
-          <mesh position={[0, DEMO_RACK_LOCAL_Y.nas - 0.3, 0.03]} castShadow>
-            <boxGeometry args={[1.12, 0.055, 1.08]} />
-            <meshStandardMaterial
-              color="#222a30"
-              metalness={0.72}
-              roughness={0.36}
-            />
-          </mesh>
           <ComputeServiceTray
             ref={trayRef}
             position={[0, DEMO_RACK_LOCAL_Y.serviceTray, 0.02]}
             componentRefs={componentRefs}
-            selectedComponent={activeComponent}
             interactive={focus === "rack"}
             onSelect={handleRackSelect}
             onComponentSelect={(component, event) => {
@@ -469,19 +451,14 @@ function DataCenterSetup() {
           />
           <NasApplianceModel
             ref={nasRef}
-            position={[0, DEMO_RACK_LOCAL_Y.nas, 0.26]}
-            label="4-BAY NETWORK STORAGE"
+            position={[0, DEMO_RACK_LOCAL_Y.nas, 0.172]}
             onSelect={handleProductSelect("nas")}
           />
           <RackStorageArrayModel
-            position={[0, DEMO_RACK_LOCAL_Y.storageArray, 0.17]}
-            label="12-BAY STORAGE ARRAY"
-            interactive={false}
+            position={[0, DEMO_RACK_LOCAL_Y.storageArray, 0.344]}
           />
           <UpsModel
-            position={[0, DEMO_RACK_LOCAL_Y.ups, 0.18]}
-            label="RACK UPS // 3KVA"
-            interactive={false}
+            position={[0, DEMO_RACK_LOCAL_Y.ups, 0.43]}
           />
         </DemoRackFrame>
 
@@ -520,7 +497,7 @@ export default function GamingCanvas({ active = true, onUnavailable }: { active?
       onCreated={({ gl }) => {
         if (onUnavailable) gl.domElement.addEventListener("webglcontextlost", onUnavailable, { once: true });
       }}
-      camera={{ position: [5.3, 3.05, 7.2], fov: 37, near: 0.1, far: 40 }}
+      camera={{ position: [5.3, 3.05, 7.2], fov: 40, near: 0.1, far: 40 }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       shadows
@@ -537,7 +514,7 @@ export default function GamingCanvas({ active = true, onUnavailable }: { active?
         <Lightformer form="rect" intensity={2} color="#e7ede8" position={[-5, 2, 3]} rotation={[0, Math.PI / 2, 0]} scale={[3, 6, 1]} />
         <Lightformer form="rect" intensity={3} color="#ffffff" position={[5, 3, -4]} rotation={[0, Math.PI, 0]} scale={[2, 6, 1]} />
       </Environment>
-      <Suspense fallback={null}>
+      <Suspense fallback={<Html center><div className={styles.modelLoading} role="status">Loading hardware…</div></Html>}>
         <DataCenterSetup />
       </Suspense>
       <OrbitControls

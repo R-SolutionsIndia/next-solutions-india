@@ -1,0 +1,208 @@
+[
+  {
+    "name": "nas",
+    "imported_meshes": 41,
+    "dimensions_m": [
+      0.22610000520944595,
+      0.2827000170946121,
+      0.20100000500679016
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "hdd",
+    "imported_meshes": 9,
+    "dimensions_m": [
+      0.10160000249743462,
+      0.15049999952316284,
+      0.031599999871104956
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "server",
+    "imported_meshes": 13,
+    "dimensions_m": [
+      0.4870000034570694,
+      0.7010000050067902,
+      0.09210000187158585
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "monitor",
+    "imported_meshes": 11,
+    "dimensions_m": [
+      0.699999988079071,
+      0.1825796663761139,
+      0.5049999952316284
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "sata-ssd",
+    "imported_meshes": 6,
+    "dimensions_m": [
+      0.07015000283718109,
+      0.10305000469088554,
+      0.007999999448657036
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "external-ssd",
+    "imported_meshes": 6,
+    "dimensions_m": [
+      0.05829999968409538,
+      0.10369999706745148,
+      0.009999999776482582
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "nvme-ssd",
+    "imported_meshes": 6,
+    "dimensions_m": [
+      0.02199999988079071,
+      0.07999999821186066,
+      0.0041000000783242285
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "ram",
+    "imported_meshes": 5,
+    "dimensions_m": [
+      0.13334999978542328,
+      0.005800000391900539,
+      0.030999998562037945
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "motherboard",
+    "imported_meshes": 9,
+    "dimensions_m": [
+      0.24699999392032623,
+      0.3050000071525574,
+      0.03899999905843288
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "cpu-cooler",
+    "imported_meshes": 7,
+    "dimensions_m": [
+      0.0820000022649765,
+      0.07514744624495506,
+      0.06750000268220901
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "gpu",
+    "imported_meshes": 13,
+    "dimensions_m": [
+      0.2900000065565109,
+      0.12350000068545341,
+      0.05999999865889549
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "mouse",
+    "imported_meshes": 7,
+    "dimensions_m": [
+      0.0784272737801075,
+      0.1284250020980835,
+      0.052597648405935615
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "keyboard",
+    "imported_meshes": 8,
+    "dimensions_m": [
+      0.3199999928474426,
+      0.1350499987602234,
+      0.02780000097118318
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "storage-array",
+    "imported_meshes": 82,
+    "dimensions_m": [
+      0.48499999940395355,
+      0.6677128970623016,
+      0.1340000107884407
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "network-switch",
+    "imported_meshes": 8,
+    "dimensions_m": [
+      0.49542057514190674,
+      0.33753950893878937,
+      0.12774546444416046
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "ups",
+    "imported_meshes": 6,
+    "dimensions_m": [
+      0.482000008225441,
+      0.4455000013113022,
+      0.12999999523162842
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "power-supply",
+    "imported_meshes": 7,
+    "dimensions_m": [
+      0.15000000596046448,
+      0.1459999978542328,
+      0.10080001503229141
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "service-tray",
+    "imported_meshes": 15,
+    "dimensions_m": [
+      0.45000000298023224,
+      0.5854039490222931,
+      0.1544999945908785
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "rack",
+    "imported_meshes": 8,
+    "dimensions_m": [
+      0.6009999811649323,
+      0.7894999980926514,
+      1.5299999993294477
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "workstation-desk",
+    "imported_meshes": 9,
+    "dimensions_m": [
+      1.25,
+      0.6499999761581421,
+      0.7949999906122684
+    ],
+    "status": "pass"
+  },
+  {
+    "name": "populated-chassis",
+    "component_roots": 9,
+    "imported_meshes": 77,
+    "status": "pass"
+  }
+]

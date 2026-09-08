@@ -1,0 +1,203 @@
+{
+  "assets": {
+    "nas": {
+      "url": "/models/hardware/nas.8fc8509dd63b.glb",
+      "bytes": 551540
+    },
+    "hdd": {
+      "url": "/models/hardware/hdd.383ccb1587a8.glb",
+      "bytes": 79400
+    },
+    "server": {
+      "url": "/models/hardware/server.f9f7bdfc3856.glb",
+      "bytes": 315196
+    },
+    "monitor": {
+      "url": "/models/hardware/monitor.81fc8685b6b4.glb",
+      "bytes": 334920
+    },
+    "sata-ssd": {
+      "url": "/models/hardware/sata-ssd.5739f15f3af6.glb",
+      "bytes": 41960
+    },
+    "external-ssd": {
+      "url": "/models/hardware/external-ssd.f3a0f41f21c6.glb",
+      "bytes": 43124
+    },
+    "nvme-ssd": {
+      "url": "/models/hardware/nvme-ssd.aec18f857fa5.glb",
+      "bytes": 119556
+    },
+    "ram": {
+      "url": "/models/hardware/ram.07ae190ba54b.glb",
+      "bytes": 79348
+    },
+    "motherboard": {
+      "url": "/models/hardware/motherboard.f8b68e6fd80f.glb",
+      "bytes": 700380
+    },
+    "cpu-cooler": {
+      "url": "/models/hardware/cpu-cooler.633de2f46af1.glb",
+      "bytes": 142676
+    },
+    "gpu": {
+      "url": "/models/hardware/gpu.f8f6b8f5401b.glb",
+      "bytes": 283284
+    },
+    "mouse": {
+      "url": "/models/hardware/mouse.0c81b20e0e1d.glb",
+      "bytes": 138064
+    },
+    "keyboard": {
+      "url": "/models/hardware/keyboard.fc8199608e96.glb",
+      "bytes": 397688
+    },
+    "storage-array": {
+      "url": "/models/hardware/storage-array.3c51c0603fcc.glb",
+      "bytes": 95556
+    },
+    "network-switch": {
+      "url": "/models/hardware/network-switch.6f3861a24f2b.glb",
+      "bytes": 259424
+    },
+    "ups": {
+      "url": "/models/hardware/ups.f56ae8b69b92.glb",
+      "bytes": 92852
+    },
+    "power-supply": {
+      "url": "/models/hardware/power-supply.7dbb82c8c187.glb",
+      "bytes": 99300
+    },
+    "service-tray": {
+      "url": "/models/hardware/service-tray.1711aba61062.glb",
+      "bytes": 439832
+    },
+    "rack": {
+      "url": "/models/hardware/rack.cae56243d3a0.glb",
+      "bytes": 664440
+    },
+    "workstation-desk": {
+      "url": "/models/hardware/workstation-desk.87826cdd9c23.glb",
+      "bytes": 59628
+    }
+  },
+  "chassis": {
+    "hdd": {
+      "position": [
+        -0.14499999582767487,
+        0.6209999918937683,
+        0.5350000262260437
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "sata-ssd": {
+      "position": [
+        -0.024000000208616257,
+        0.6209999918937683,
+        0.5410000085830688
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "nvme-ssd": {
+      "position": [
+        0.07199999690055847,
+        0.6269999742507935,
+        0.23999999463558197
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "ram": {
+      "position": [
+        -0.010999999940395355,
+        0.6309999823570251,
+        0.3089999854564667
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "motherboard": {
+      "position": [
+        -0.04500000178813934,
+        0.621999979019165,
+        0.25
+      ],
+      "quaternion": [
+        0,
+        -0.7071068286895752,
+        0,
+        0.7071068286895752
+      ]
+    },
+    "cpu-cooler": {
+      "position": [
+        0,
+        0.6370000243186951,
+        0.23000000417232513
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "gpu": {
+      "position": [
+        -0.09000000357627869,
+        0.6899999976158142,
+        0.27000001072883606
+      ],
+      "quaternion": [
+        0.5,
+        -0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "power-supply": {
+      "position": [
+        0.12999999523162842,
+        0.6150000095367432,
+        0.5350000262260437
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "service-tray": {
+      "position": [
+        0,
+        0.6000000238418579,
+        0.36000001430511475
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  }
+}

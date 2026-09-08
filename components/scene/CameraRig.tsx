@@ -20,7 +20,7 @@ function getTargetFov(focus: string, mobile: boolean) {
   if (mobile) {
     return focus === "overview" ? 44 : focus === "rack" || focus === "workstation" ? 46 : 43;
   }
-  return focus === "overview" ? 37 : focus === "rack" || focus === "workstation" ? 33 : 30;
+  return focus === "overview" ? 40 : focus === "rack" || focus === "workstation" ? 33 : 30;
 }
 
 export function CameraRig({ controlsRef }: CameraRigProps) {

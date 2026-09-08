@@ -28,7 +28,8 @@
 .dragHint { position: absolute; right: 4vw; bottom: 113px; display: flex; gap: 10px; align-items: center; color: #98a49c; font: 10px var(--font-mono), monospace; pointer-events: none; }
 .loading, .fallback { position: absolute; inset: 0; background: #101214; }
 .loading::before { position: absolute; top: 50%; left: 70%; width: 28px; height: 28px; border: 1px solid #474f49; border-top-color: #d7e4d8; border-radius: 50%; content: ''; animation: spin 900ms linear infinite; }
-.fallbackPoster { position: absolute; inset: 0; background: url('/scene/studio-fallback.jpg') right center / auto 100% no-repeat, #101214; }
+.fallbackPoster { position: absolute; inset: 0; background: url('/scene/hardware-studio.webp') right center / auto 100% no-repeat, #101214; }
+.modelLoading { padding: 12px 18px; color: #d7e4d8; background: #101214e8; border: 1px solid #474f49; white-space: nowrap; font-size: 13px; }
 .fallbackActions { display: none; }
 .fallbackButton { min-height: 44px; padding: 10px 14px; color: #fff; border: 1px solid #5b655e; background: #101214; cursor: pointer; }
 .backControl { position: absolute; top: 28px; left: 4vw; z-index: 5; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; color: #d7e4d8; background: transparent; border-bottom: 1px solid #637368; font-size: 13px; cursor: pointer; }
